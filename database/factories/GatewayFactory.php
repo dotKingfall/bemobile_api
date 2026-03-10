@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use App\Models\Gateway;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Gateway>
@@ -14,6 +15,7 @@ class GatewayFactory extends Factory
      *
      * @return array<string, mixed>
      */
+    protected $model = Gateway::class;
     public function definition(): array
     {
         return [

@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use App\Models\TransactionProduct;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\TransactionProduct>
@@ -14,6 +15,8 @@ class TransactionProductFactory extends Factory
      *
      * @return array<string, mixed>
      */
+    protected $model = TransactionProduct::class;
+
     public function definition(): array
     {
         return [
