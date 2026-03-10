@@ -17,7 +17,9 @@ class GatewayFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'name' => fake()->company() . ' Gateway',
+            'is_active' => true,
+            'priority' => 1,
         ];
     }
 }
