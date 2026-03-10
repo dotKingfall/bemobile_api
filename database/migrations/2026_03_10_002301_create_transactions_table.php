@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('client_id')->constrained();
-            $table->string('gateway');
+            $table->string('gateway_id');
             $table->string('external_id')->nullable();
             $table->string('status');
             $table->integer('amount');
