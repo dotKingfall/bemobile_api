@@ -4,6 +4,8 @@ namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\TransactionProduct;
+use App\Models\Transaction;
+use App\Models\Product;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\TransactionProduct>
@@ -20,7 +22,9 @@ class TransactionProductFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'transaction_id' => Transaction::factory(),
+            'product_id' => Product::inRandomOrder()->first()->id,
+            'quantity' => fake()->numberBetween(1, 10),
         ];
     }
 }
