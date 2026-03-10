@@ -3,6 +3,11 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Models\Client;
+use App\Models\Gateway;
+use App\Models\Product;
+use App\Models\Transaction;
+use App\Models\TransactionProduct;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -15,11 +20,39 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        User::factory()->admin()->create([
+            'name'  => 'Admin User',
+            'email' => 'admin@admin.com',
+        ]);
+
+        User::factory()->manager()->create([
+            'name'  => 'Manager User',
+            'email' => 'manager@manager.com',
+        ]);
+
+        User::factory()->finance()->create([
+            'name'  => 'Finance User',
+            'email' => 'finance@finance.com',
+        ]);
 
         User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            'name'  => 'Standard User',
+            'email' => 'user@user.com',
         ]);
+
+        Gateway::create(['name' => 'Gateway 1', 'priority' => 1, 'is_active' => true]);
+        Gateway::create(['name' => 'Gateway 2', 'priority' => 2, 'is_active' => true]);
+
+        Client::factory(13)->create();
+        Product::factory(200)->create();
+
+        //CREATE SOME MOCK TRANSACTIONS USING THE OTHER FACTORIES' DATA
+        Transaction::factory(50)->create()->each(function ($transaction){
+            TransactionProduct::create([
+                'transaction_id' => $transaction->id,
+                'product_id'     => $transaction->product_id,
+                'quantity'       => $transaction->quantity,
+            ]);
+        });
     }
 }
