@@ -15,9 +15,14 @@ class CheckUserRole
      */
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
-        $userRole = strtolower($request->user()->role);
+        if (!$request->user()) {
+            return response()->json(['message' => 'Unauthenticated User'], 401);
+        }
 
-        if(in_array($userRole, array_map('strtolower', $roles))) {
+        $userRole = strtolower($request->user()->role);
+        $allowedRoles = array_map('strtolower', $roles);
+
+        if(in_array($userRole, $allowedRoles)) {
             return $next($request);
         }
 
