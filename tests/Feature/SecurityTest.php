@@ -21,7 +21,10 @@ class SecurityTest extends TestCase
         ->assertJsonValidationErrors(['email']);
     }
 
-    public function test_protected_routes_need_auth(){}
+    public function test_protected_routes_need_auth(){
+        $response = $this->getJson('/api/user'); //NO AUTH/TOKEN AT ALL :D
+        $response->assertStatus(401);
+    }
 
     public function test_role_check_is_case_insensitive(){}
 
