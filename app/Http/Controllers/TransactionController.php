@@ -67,9 +67,11 @@ class TransactionController extends Controller
             try{
                 //TODO
             } catch (ConnectionException $e){
-                //TODO
+                Log::error("TIMEOUT: [GATEWAY] '{$gateway->name}' timed out.");
+                continue;
             } catch (Exception $e){
-                //TODO
+                Log::error("FAILURE: [GATEWAY] '{$gateway->name}' failed: " . $e->getMessage());
+                continue;
             }
         }
 
