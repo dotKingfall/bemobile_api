@@ -25,9 +25,11 @@ class Transaction extends Model
         return $this->belongsTo(Client::class);
     }
 
-    public function product()
+    public function products()
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsToMany(Product::class, 'transaction_products')
+        ->withPivot('quantity')
+        ->withTimestamps();
     }
 
     public function gateway()

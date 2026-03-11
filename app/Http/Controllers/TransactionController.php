@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\Gateway;
 use App\Models\Transaction;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\DB;
 
 class TransactionController extends Controller
 {
@@ -63,6 +64,7 @@ class TransactionController extends Controller
         //ITERATE THROUGH GATEWAYS
         $selectedGateway = null;
         $externalId = null;
+        $ccLastNumbers = substr('5569000000006063', -4); //MOCK CC NUMBER, WOULD BE PART OF THE REQUEST IN REAL LIFE
 
         foreach($gateways as $gateway){
             try{
@@ -110,7 +112,11 @@ class TransactionController extends Controller
                 Log::warning("TIMEOUT: [GATEWAY] '{$gateway->name}' timed out.");
                 continue;
             } catch (Exception $e){
-                Log::warning($e->getMessage());
+                Log::warning("Gateway Failed", [
+                    'gateway' => $gateway->name,
+                    'priority' => $gateway->priority,
+                    'error' => $e->getMessage()
+                ]);
                 continue;
             }
         }
@@ -120,6 +126,30 @@ class TransactionController extends Controller
             return response()->json(['message' => 'Payment failed. All gateways are unavailable'], 500);
         }
 
-        //TODO COMPLETE
+        //CREATE TRANSACTION RECORD AND LINK TO PRODUCTS
+        $transaction = DB::transaction(
+            function() use ($product, $quantity, $totalAmount, $selectedGateway, $externalId, $ccLastNumbers, $request) {
+                $inner_transaction = Transaction::create([
+                    'client_id'         => auth('sanctum')->id(),
+                    'client_email'      => $request->email,
+                    'gateway_id'        => $selectedGateway->id,
+                    'external_id'       => $externalId,
+                    'status'            => '03 - completed',
+                    'amount'            => $totalAmount,
+                    'card_last_numbers' => $ccLastNumbers,
+                    'product_id'        => $product->id,
+                    'quantity'          => $quantity,
+                ]);
+
+                $inner_transaction->products()->attach($product->id, ['quantity' => $quantity]);
+                return $inner_transaction;
+            }
+        );
+
+        return response()->json([
+            'message'        => 'Yay, purchase successful!',
+            'transaction_id' => $transaction->id,
+            'gateway'        => $selectedGateway->name
+        ], 201);
     }
 }
