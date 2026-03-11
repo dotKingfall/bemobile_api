@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Gateway;
 use App\Models\Transaction;
+use Illuminate\Http\Client\ConnectionException;
 
 class TransactionController extends Controller
 {
@@ -40,8 +41,36 @@ class TransactionController extends Controller
         if (!$product) {
             Log::error('Product not found', ['identifier' => $request->product_id]);
             return response()->json([
-                'message' => "The product '{$request->product_id}' was not found."
+                'message' => "The product '{$request->product_id}' was not found"
             ], 404);
+        }
+
+        //TOTAL AMOUNT CALC
+        $quantity = $request->quantity ?? 1;
+        $totalAmount = $product->amount * $quantity;
+
+        //CHECK FOR ACTIVE GATEWAYS
+        $gateways = Gateway::where('is_active', true)
+            ->orderBy('priority', 'asc')
+            ->get();
+
+        if ($gateways->isEmpty()) {
+            Log::critical('CRITICAL: All gateways are disabled or misconfigured');
+            return response()->json(['message' => 'Service temporarily unavailable'], 503);
+        }
+
+        //ITERATE THROUGH GATEWAYS
+        $selectedGateway = null;
+        $externalId = null;
+
+        foreach($gateways as $gateway){
+            try{
+                //TODO
+            } catch (ConnectionException $e){
+                //TODO
+            } catch (Exception $e){
+                //TODO
+            }
         }
 
         //TODO COMPLETE
