@@ -38,7 +38,7 @@ class TransactionController extends Controller
 
         //DECIDE IF WE'LL LOOK FOR THE PRODUCT BY ID OR NAME
         Log::info('Searching for product', ['identifier' => $request->product_id]);
-        $product = Product::findByIdOrName($request->product_id);
+        $product = Product::findByIdOrName($request->product_id)->first();
 
         if (!$product) {
             Log::error('Product not found', ['identifier' => $request->product_id]);
@@ -130,7 +130,7 @@ class TransactionController extends Controller
         $transaction = DB::transaction(
             function() use ($product, $quantity, $totalAmount, $selectedGateway, $externalId, $ccLastNumbers, $request) {
                 $inner_transaction = Transaction::create([
-                    'client_id'         => auth('sanctum')->id(),
+                    'client_id'         => auth('sanctum')->check() ? auth('sanctum')->id() : null,
                     'client_email'      => $request->email,
                     'gateway_id'        => $selectedGateway->id,
                     'external_id'       => $externalId,

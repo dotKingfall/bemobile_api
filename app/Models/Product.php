@@ -30,9 +30,9 @@ class Product extends Model
 
         //REMOVE EVERYTHING BUT BLANK SPACES, NUMBERS AND LETTERS FROM INPUT -> NORMALIZE TO LOWERCASE AND REMOVE ACCENTS
         $cleanInput = preg_replace('/[^a-zA-Z0-9\s]/u', '', $input);
-        $normalized = strtolower(trim(Str::ascii($cleanInput)));
+        //$normalized = strtolower(trim(Str::ascii($cleanInput)));
 
         //PRODUCT NAME
-        return $query->whereRaw('LOWER(name) LIKE ?', ["%{$normalized}%"]);
+        return $query->whereRaw('name LIKE ?', ["%{$cleanInput}%"]);
     }
 }

@@ -21,23 +21,27 @@ class TransactionFactory extends Factory
     protected $model = Transaction::class;
     public function definition(): array
     {
-        $product = Product::inRandomOrder()->first() ?? Product::factory()->create();
-        $quantity = fake()->numberBetween(1, 10);
         $statusList = [
             '01 - pending', '02 - processing', '03 - completed', 
             '04 - failed', '05 - chargeback', '06 - refunded', '07 - partially refunded'
         ];
 
         return [
-            'client_id' => Client::inRandomOrder()->first()->id ?? Client::factory(),
+            'client_id' => Client::factory(),
             'client_email' => fake()->unique()->safeEmail(),
-            'gateway_id' => Gateway::inRandomOrder()->first()->id ?? Gateway::factory(),
+
+            'gateway_id' => fn () => Gateway::inRandomOrder()->first()->id ?? Gateway::factory(),
             'external_id' => 'ref_' . str()->random(10),
             'status' => fake()->randomElement($statusList),
-            'amount' => $product->amount * $quantity,
+
             'card_last_numbers' => fake()->numerify('####'),
-            'product_id' => $product->id,
-            'quantity' => $quantity
+            'product_id'   => fn () => Product::inRandomOrder()->first()->id ?? Product::factory(),
+            'quantity' => fake()->numberBetween(1, 10),
+
+            'amount' => function (array $attributes) {
+                $product = Product::find($attributes['product_id']);
+                return ($product->amount ?? 1000) * $attributes['quantity'];
+            },
         ];
     }
 }

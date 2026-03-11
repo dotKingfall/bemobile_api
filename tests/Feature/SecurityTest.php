@@ -35,7 +35,7 @@ class SecurityTest extends TestCase
     }
 
     public function test_user_with_insufficient_role_gets_403(){
-        $user = User::factory()->create(['role' => 'user']);
+        $user = User::factory()->create(['role' => 'finance']);
 
         $response = $this->actingAs($user)->getJson('/api/user'); // TODO CHANGE THIS ROUTE FOR ADMIN PROTECTED ROUTE
 
