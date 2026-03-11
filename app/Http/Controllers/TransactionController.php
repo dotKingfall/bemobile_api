@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Product;
+use App\Models\Gateway;
+use App\Models\Transaction;
 
 class TransactionController extends Controller
 {
@@ -20,8 +23,9 @@ class TransactionController extends Controller
             'email.email' => 'The customer email is not valid.',
         ]);
 
-        //REMOVE EVERYTHING BUT BLANK SPACES, NUMBERS AND LETTERS FROM
 
+        //DECIDE IF WE'LL LOOK FOR THE PRODUCT BY ID OR NAME
+        $product = Product::findByIdOrName($request->product_id);
 
         //TODO COMPLETE
     }
