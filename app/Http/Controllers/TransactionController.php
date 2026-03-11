@@ -12,6 +12,9 @@ class TransactionController extends Controller
             'product_id' => 'required|exists:products,id',
             'name' => 'required|string|min:1|max:255',
             'quantity' => 'nullable|integer|min:1',
+        ], [
+            //CUSTOM MESSAGES
+            'name.required' => 'The customer name cannot be empty.',
         ]);
 
         //REMOVE EVERYTHING BUT BLANK SPACES, NUMBERS AND LETTERS FROM

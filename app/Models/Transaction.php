@@ -10,6 +10,7 @@ class Transaction extends Model
     use HasFactory;
     protected $fillable = [
         'client_id',
+        'client_email',
         'gateway_id',
         'external_id',
         'status',

@@ -30,10 +30,11 @@ class TransactionFactory extends Factory
 
         return [
             'client_id' => Client::inRandomOrder()->first()->id ?? Client::factory(),
+            'client_email' => fake()->unique()->safeEmail(),
             'gateway_id' => Gateway::inRandomOrder()->first()->id ?? Gateway::factory(),
             'external_id' => 'ref_' . str()->random(10),
             'status' => fake()->randomElement($statusList),
-            'amount' => $product->price * $quantity,
+            'amount' => $product->amount * $quantity,
             'card_last_numbers' => fake()->numerify('####'),
             'product_id' => $product->id,
             'quantity' => $quantity
