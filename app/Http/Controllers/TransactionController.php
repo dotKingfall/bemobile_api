@@ -146,6 +146,11 @@ class TransactionController extends Controller
             }
         );
 
+        Log::info('Purchase completed!', [
+            'transaction_id' => $transaction->id,
+            'gateway' => $selectedGateway->name,
+            'amount' => $totalAmount
+        ]);
         return response()->json([
             'message'        => 'Yay, purchase successful!',
             'transaction_id' => $transaction->id,
