@@ -11,7 +11,7 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
+            'email' => 'required|email', //USE email:rfc,dns ON PRODUCTION
             'password' => 'required',
         ]);
 
