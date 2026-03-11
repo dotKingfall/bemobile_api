@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Log;
 use Exception;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Gateway;
@@ -65,14 +66,58 @@ class TransactionController extends Controller
 
         foreach($gateways as $gateway){
             try{
-                //TODO
+                //*IF THIS WAS REAL I WOULD VALIDATE THE CC NUMBER WITH LUHN'S ALGORITHM
+                //MOCK PAYLOAD
+                $payload = [
+                    'name'  => $request->name,
+                    'email' => $request->email,
+                    'cardNumber' => '5569000000006063',
+                    'cvv' => '010',
+                ];
+
+                $client = Http::timeout(5)->connectTimeout(2);
+
+                if($gateway-> name === config('gateways.gateway_1.name')){
+                    Log::info("Attempting payment through Gateway 1");
+                    $payload['amount'] = $totalAmount;
+
+                    $response = $client->withToken(
+                        config('gateways.gateway_1.token'))
+                        ->post(config('gateways.gateway_1.url'), $payload);
+                }
+                elseif ($gateway->name === config('gateways.gateway_2.name')){
+                    Log::info("Attempting payment through Gateway 2");
+                    $payload['valor'] = $totalAmount;
+
+                    $response = $client->withHeaders([
+                        'Gateway-Auth-Token' => config('gateways.gateway_2.token'),
+                        'Gateway-Auth-Secret' => config('gateways.gateway_2.secret')
+                    ])->post(config('gateways.gateway_2.url'), $payload);
+                }
+
+                //SUCCESSFULLY CONNECTED TO GATEWAY, CHECK RESPONSE
+                if ($response && $response->successful()) {
+                    $selectedGateway = $gateway;
+                    $externalId = $response->json('id');
+                    break; 
+                }
+
+                //FAIL SAFE :D
+                $status = $response ? $response->status() : 'Unknown';
+                throw new Exception("[GATEWAY] '{$gateway->name}' failed with status: {$status}");
+
             } catch (ConnectionException $e){
-                Log::error("TIMEOUT: [GATEWAY] '{$gateway->name}' timed out.");
+                Log::warning("TIMEOUT: [GATEWAY] '{$gateway->name}' timed out.");
                 continue;
             } catch (Exception $e){
-                Log::error("FAILURE: [GATEWAY] '{$gateway->name}' failed: " . $e->getMessage());
+                Log::warning($e->getMessage());
                 continue;
             }
+        }
+
+        if (!$selectedGateway) {
+            Log::emergency('SYSTEM FAILURE: All active gateways failed');
+            return response()->json(['message' => 'Payment failed. All gateways are unavailable'], 500);
         }
 
         //TODO COMPLETE
