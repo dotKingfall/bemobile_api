@@ -40,14 +40,24 @@ class DatabaseSeeder extends Seeder
             'email' => 'user@user.com',
         ]);
 
-        Gateway::create(['name' => 'Gateway 1', 'priority' => 1, 'is_active' => true]);
-        Gateway::create(['name' => 'Gateway 2', 'priority' => 2, 'is_active' => true]);
+        $gateways = [
+            ['name' => config('gateways.gateway_1.name'), 'priority' => 1, 'is_active' => true],
+            ['name' => config('gateways.gateway_2.name'), 'priority' => 2, 'is_active' => true],
+        ];
+
+        foreach ($gateways as $gw) {
+            Gateway::updateOrCreate(['name' => $gw['name']], $gw);
+        }
+        $availableGateways = Gateway::all();
 
         Client::factory(13)->create();
         Product::factory(200)->create();
 
         //CREATE SOME MOCK TRANSACTIONS USING THE OTHER FACTORIES' DATA
-        Transaction::factory(50)->create()->each(function ($transaction){
+        Transaction::factory(50)->create()->each(function ($transaction) use ($availableGateways){
+            $transaction->gateway_id = $availableGateways->random()->id;
+            $transaction->save();
+
             TransactionProduct::create([
                 'transaction_id' => $transaction->id,
                 'product_id'     => $transaction->product_id,

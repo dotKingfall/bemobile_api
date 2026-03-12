@@ -28,11 +28,9 @@ class Product extends Model
             return $query->where('id', $input);
         }
 
-        //REMOVE EVERYTHING BUT BLANK SPACES, NUMBERS AND LETTERS FROM INPUT -> NORMALIZE TO LOWERCASE AND REMOVE ACCENTS
-        $cleanInput = preg_replace('/[^a-zA-Z0-9\s]/u', '', $input);
-        //$normalized = strtolower(trim(Str::ascii($cleanInput)));
-
-        //PRODUCT NAME
-        return $query->whereRaw('name LIKE ?', ["%{$cleanInput}%"]);
+        //* I WOULD ALSO LOWERCASE AND REMOVE ACCENTS, BUT MYSQL IS CASE INSENSITE, SO...
+        //CLEAR UNWANTED CHARACTERS
+        $cleanInput = preg_replace('/[^\p{L}\p{N}\s]/u', '', $input);
+        return $query->where('name', 'LIKE', '%' . trim($cleanInput) . '%');
     }
 }

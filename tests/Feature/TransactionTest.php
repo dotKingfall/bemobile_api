@@ -69,7 +69,7 @@ class TransactionTest extends TestCase
 
     public function test_products_table_pivot_record_creation(){
         $product = Product::factory()->create();
-        Gateway::factory()->create(['is_active' => true]);
+        Gateway::factory()->create(['name' => 'Gateway 1', 'is_active' => true, 'priority' => 1]);
 
         Http::fake(['*' => Http::response(['id' => '1'], 201)]);
 
@@ -89,12 +89,13 @@ class TransactionTest extends TestCase
     }
 
     public function test_find_a_product_by_normalized_name(){
+
         $product = Product::factory()->create([
             'name' => 'Câmera Fotográfica',
             'amount' => 1000
         ]);
 
-        Gateway::factory()->create(['is_active' => true]);
+        Gateway::factory()->create(['name' => 'Gateway 1', 'is_active' => true, 'priority' => 1]);
         Http::fake(['*' => Http::response(['id' => 'ext_123'], 201)]);
 
         $response = $this->postJson('/api/buy', [
@@ -102,6 +103,8 @@ class TransactionTest extends TestCase
             'name'       => 'User Normalized',
             'email'      => 'usernormalized@example.com',
         ]);
+
+        dump($response->json());
 
         $response->assertStatus(201);
         $this->assertDatabaseHas('transactions', [
@@ -111,23 +114,23 @@ class TransactionTest extends TestCase
     }
 
     public function test_return_500_if_all_gateways_fail()
-{
-    $product = Product::factory()->create();
-    Gateway::factory()->create(['name' => 'Gateway 1', 'is_active' => true, 'priority' => 1]);
-    Gateway::factory()->create(['name' => 'Gateway 2', 'is_active' => true, 'priority' => 2]);
+    {
+        $product = Product::factory()->create();
+        Gateway::factory()->create(['name' => 'Gateway 1', 'is_active' => true, 'priority' => 1]);
+        Gateway::factory()->create(['name' => 'Gateway 2', 'is_active' => true, 'priority' => 2]);
 
-    Http::fake([
-        'http://localhost:3001/*' => Http::response([], 500),
-        'http://localhost:3002/*' => Http::response([], 500),
-    ]);
+        Http::fake([
+            'http://localhost:3001/*' => Http::response([], 500),
+            'http://localhost:3002/*' => Http::response([], 500),
+        ]);
 
-    $response = $this->postJson('/api/buy', [
-        'product_id' => $product->id,
-        'name'       => 'Unlucky Buyer',
-        'email'      => 'unlucky@example.com',
-    ]);
+        $response = $this->postJson('/api/buy', [
+            'product_id' => $product->id,
+            'name'       => 'Unlucky Buyer',
+            'email'      => 'unlucky@example.com',
+        ]);
 
-    $response->assertStatus(500);
-    $this->assertDatabaseCount('transactions', 0);
-}
+        $response->assertStatus(500);
+        $this->assertDatabaseCount('transactions', 0);
+    }
 }

@@ -38,7 +38,7 @@ class TransactionController extends Controller
 
         //DECIDE IF WE'LL LOOK FOR THE PRODUCT BY ID OR NAME
         Log::info('Searching for product', ['identifier' => $request->product_id]);
-        $product = Product::findByIdOrName($request->product_id)->first();
+        $product = Product::findByIdOrName($request->product_id)->firstOrFail();
 
         if (!$product) {
             Log::error('Product not found', ['identifier' => $request->product_id]);
@@ -78,6 +78,7 @@ class TransactionController extends Controller
                 ];
 
                 $client = Http::timeout(5)->connectTimeout(2);
+                dump("Attempting payment through {$gateway->name}");
 
                 if($gateway-> name === config('gateways.gateway_1.name')){
                     Log::info("Attempting payment through Gateway 1");
