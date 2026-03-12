@@ -78,7 +78,6 @@ class TransactionController extends Controller
                 ];
 
                 $client = Http::timeout(5)->connectTimeout(2);
-                dump("Attempting payment through {$gateway->name}");
 
                 if($gateway-> name === config('gateways.gateway_1.name')){
                     Log::info("Attempting payment through Gateway 1");

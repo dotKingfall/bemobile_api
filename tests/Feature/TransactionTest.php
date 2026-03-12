@@ -24,7 +24,7 @@ class TransactionTest extends TestCase
 
     public function test_calculate_price_on_backend(){
         $product = Product::factory()->create(['amount' => 5000]); // AGAIN, IN CENTS
-        $gateway = Gateway::factory()->create(['name' => 'Gateway 1', 'is_active' => true]);
+        $gateway = Gateway::factory()->gateway1()->create();
 
         Http::fake([
             '*' => Http::response(['id' => 'ext_123'], 201)
@@ -46,8 +46,8 @@ class TransactionTest extends TestCase
 
     public function test_gateway_fallback_mechanism(){
         $product = Product::factory()->create();
-        $g1 = Gateway::factory()->create(['name' => 'Gateway 1', 'priority' => 1, 'is_active' => true]);
-        $g2 = Gateway::factory()->create(['name' => 'Gateway 2', 'priority' => 2, 'is_active' => true]);
+        $g1 = Gateway::factory()->gateway1()->create();
+        $g2 = Gateway::factory()->gateway2()->create();
 
         Http::fake([
             'http://localhost:3001/*' => Http::response([], 500),
@@ -69,7 +69,7 @@ class TransactionTest extends TestCase
 
     public function test_products_table_pivot_record_creation(){
         $product = Product::factory()->create();
-        Gateway::factory()->create(['name' => 'Gateway 1', 'is_active' => true, 'priority' => 1]);
+        Gateway::factory()->gateway1()->create();
 
         Http::fake(['*' => Http::response(['id' => '1'], 201)]);
 
@@ -84,8 +84,6 @@ class TransactionTest extends TestCase
             'product_id' => $product->id,
             'quantity'   => 5
         ]);
-
-        //$response->dump();
     }
 
     public function test_find_a_product_by_normalized_name(){
@@ -95,7 +93,7 @@ class TransactionTest extends TestCase
             'amount' => 1000
         ]);
 
-        Gateway::factory()->create(['name' => 'Gateway 1', 'is_active' => true, 'priority' => 1]);
+        Gateway::factory()->gateway1()->create();
         Http::fake(['*' => Http::response(['id' => 'ext_123'], 201)]);
 
         $response = $this->postJson('/api/buy', [
@@ -103,8 +101,6 @@ class TransactionTest extends TestCase
             'name'       => 'User Normalized',
             'email'      => 'usernormalized@example.com',
         ]);
-
-        dump($response->json());
 
         $response->assertStatus(201);
         $this->assertDatabaseHas('transactions', [
@@ -116,8 +112,8 @@ class TransactionTest extends TestCase
     public function test_return_500_if_all_gateways_fail()
     {
         $product = Product::factory()->create();
-        Gateway::factory()->create(['name' => 'Gateway 1', 'is_active' => true, 'priority' => 1]);
-        Gateway::factory()->create(['name' => 'Gateway 2', 'is_active' => true, 'priority' => 2]);
+        Gateway::factory()->gateway1()->create();
+        Gateway::factory()->gateway2()->create();
 
         Http::fake([
             'http://localhost:3001/*' => Http::response([], 500),

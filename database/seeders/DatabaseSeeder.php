@@ -20,44 +20,26 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::factory()->admin()->create([
-            'name'  => 'Admin User',
-            'email' => 'admin@admin.com',
-        ]);
+        //CREATE ALL ROLES FOR TESTING PURPOSES
+        User::factory()->admin()->create(['name' => 'Admin User', 'email' => 'admin@admin.com']);
+        User::factory()->manager()->create(['name' => 'Manager User', 'email' => 'manager@manager.com']);
+        User::factory()->finance()->create(['name' => 'Finance User', 'email' => 'finance@finance.com']);
+        User::factory()->create(['name' => 'Standard User', 'email' => 'user@user.com']);
 
-        User::factory()->manager()->create([
-            'name'  => 'Manager User',
-            'email' => 'manager@manager.com',
-        ]);
-
-        User::factory()->finance()->create([
-            'name'  => 'Finance User',
-            'email' => 'finance@finance.com',
-        ]);
-
-        User::factory()->create([
-            'name'  => 'Standard User',
-            'email' => 'user@user.com',
-        ]);
-
-        $gateways = [
-            ['name' => config('gateways.gateway_1.name'), 'priority' => 1, 'is_active' => true],
-            ['name' => config('gateways.gateway_2.name'), 'priority' => 2, 'is_active' => true],
-        ];
-
-        foreach ($gateways as $gw) {
-            Gateway::updateOrCreate(['name' => $gw['name']], $gw);
-        }
-        $availableGateways = Gateway::all();
+        Gateway::factory()->gateway1()->create();
+        Gateway::factory()->gateway2()->create();
 
         Client::factory(13)->create();
         Product::factory(200)->create();
 
-        //CREATE SOME MOCK TRANSACTIONS USING THE OTHER FACTORIES' DATA
-        Transaction::factory(50)->create()->each(function ($transaction) use ($availableGateways){
-            $transaction->gateway_id = $availableGateways->random()->id;
+        $gateways = Gateway::all();
+
+
+        Transaction::factory(50)->make()->each(function ($transaction) use ($gateways) {
+            $transaction->gateway_id = $gateways->random()->id;
             $transaction->save();
 
+            // Create Pivot Record
             TransactionProduct::create([
                 'transaction_id' => $transaction->id,
                 'product_id'     => $transaction->product_id,
