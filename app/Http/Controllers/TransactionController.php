@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 use App\Models\Product;
 use App\Models\Gateway;
@@ -56,9 +57,10 @@ class TransactionController extends Controller
             ], 404);
         }
 
-        //TOTAL AMOUNT CALC
+        //TOTAL AMOUNT CALC + CC LAST 4 DIGITS
         $quantity = $request->quantity ?? 1;
         $totalAmount = $product->amount * $quantity;
+        $ccLastNumbers = substr($request->cardNumber, -4);
 
         //CHECK FOR ACTIVE GATEWAYS
         $gateways = Gateway::where('is_active', true)
@@ -70,109 +72,119 @@ class TransactionController extends Controller
             return response()->json(['message' => 'Service temporarily unavailable'], 503);
         }
 
-        //ITERATE THROUGH GATEWAYS
-        $selectedGateway = null;
-        $externalId = null;
-        $ccLastNumbers = substr($request->cardNumber, -4);
-
-        foreach($gateways as $gateway){
-            try{
-                //*IF THIS WAS REAL I WOULD VALIDATE THE CC NUMBER WITH LUHN'S ALGORITHM
-                //MOCK PAYLOAD
-                //TODO MENTION DTOs IF THIS WAS A REAL SCENARIO
-                
-
-                $client = Http::timeout(5)->connectTimeout(2);
-
-                if($gateway-> name === config('gateways.gateway_1.name')){
-                    Log::info("Attempting payment through Gateway 1");
-
-                    $payload = [
-                        'amount' => $totalAmount,
-                        'name'  => $request->name,
-                        'email' => $request->email,
-                        'cardNumber' => $request->cardNumber,
-                        'cvv' => $request->cvv,
-                    ];
-
-                    $response = $client->withToken(
-                        config('gateways.gateway_1.token'))
-                        ->post(config('gateways.gateway_1.url'), $payload);
-                }
-                elseif ($gateway->name === config('gateways.gateway_2.name')){
-                    Log::info("Attempting payment through Gateway 2");
-                    $payload = [
-                        'valor' => $totalAmount,
-                        'nome'  => $request->name,
-                        'email' => $request->email,
-                        'numeroCartao' => $request->cardNumber,
-                        'cvv' => $request->cvv,
-                    ];
-
-                    $response = $client->withHeaders([
-                        'Gateway-Auth-Token' => config('gateways.gateway_2.token'),
-                        'Gateway-Auth-Secret' => config('gateways.gateway_2.secret')
-                    ])->post(config('gateways.gateway_2.url'), $payload);
-                }
-
-                //SUCCESSFULLY CONNECTED TO GATEWAY, CHECK RESPONSE
-                if ($response && $response->successful()) {
-                    $selectedGateway = $gateway;
-                    $externalId = $response->json('id');
-                    break; 
-                }
-
-                //FAIL SAFE :D
-                $status = $response ? $response->status() : 'Unknown';
-                throw new Exception("[GATEWAY] '{$gateway->name}' failed with status: {$status}");
-
-            } catch (ConnectionException $e){
-                Log::warning("TIMEOUT: [GATEWAY] '{$gateway->name}' timed out.");
-                continue;
-            } catch (Exception $e){
-                Log::warning("Gateway Failed", [
-                    'gateway' => $gateway->name,
-                    'priority' => $gateway->priority,
-                    'error' => $e->getMessage()
-                ]);
-                continue;
-            }
-        }
-
-        if (!$selectedGateway) {
-            Log::emergency('SYSTEM FAILURE: All active gateways failed');
-            return response()->json(['message' => 'Payment failed. All gateways are unavailable'], 502);
-        }
-
-        //CREATE TRANSACTION RECORD AND LINK TO PRODUCTS
-        $transaction = DB::transaction(
-            function() use ($product, $quantity, $totalAmount, $selectedGateway, $externalId, $ccLastNumbers, $request) {
-                $inner_transaction = Transaction::create([
-                    'client_id'         => auth('sanctum')->check() ? auth('sanctum')->id() : null,
-                    'client_email'      => $request->email,
-                    'gateway_id'        => $selectedGateway->id,
-                    'external_id'       => $externalId,
-                    'status'            => '03 - completed',
-                    'amount'            => $totalAmount,
-                    'card_last_numbers' => $ccLastNumbers,
-                    'product_id'        => $product->id,
-                    'quantity'          => $quantity,
-                ]);
-
-                $inner_transaction->products()->attach($product->id, ['quantity' => $quantity]);
-                return $inner_transaction;
-            }
+        //CACHE LOCK LOGIC
+        $idempotencyKey = 'payment_lock_' . md5(
+    $request->email . 
+            $request->product_id . 
+            $totalAmount . 
+            $request->cardNumber
         );
+        
 
-        Log::info('Purchase completed!', [
-            'transaction_id' => $transaction->id,
-            'gateway' => $selectedGateway->name,
-            'amount' => $totalAmount
-        ]);
-        return response()->json([
-            'message'        => 'Yay, purchase successful!',
-            'transaction_id' => $transaction->id,
-            'gateway'        => $selectedGateway->name
-        ], 201);
+        //LOCK IF THE SAME TRANSACTION HAPPENED IN THE LAST 10 SECONDS :D
+        return Cache::lock($idempotencyKey, 10)->get(function () use ($request, $product, $quantity, $totalAmount, $gateways, $ccLastNumbers) {
+            //ITERATE THROUGH GATEWAYS
+            $selectedGateway = null;
+            $externalId = null;
+
+            foreach($gateways as $gateway){
+                try{
+                    //*IF THIS WAS A REAL USE SCENARIO I'D PROBABLY BE USING DTO HERE TO MATCH THE DIFFERENT GATEWAY ARGUMENTS
+                    
+                    $client = Http::timeout(5)->connectTimeout(2);
+
+                    if($gateway-> name === config('gateways.gateway_1.name')){
+                        Log::info("Attempting payment through Gateway 1");
+
+                        $payload = [
+                            'amount' => $totalAmount,
+                            'name'  => $request->name,
+                            'email' => $request->email,
+                            'cardNumber' => $request->cardNumber,
+                            'cvv' => $request->cvv,
+                        ];
+
+                        $response = $client->withToken(
+                            config('gateways.gateway_1.token'))
+                            ->post(config('gateways.gateway_1.url'), $payload);
+                    }
+                    elseif ($gateway->name === config('gateways.gateway_2.name')){
+                        Log::info("Attempting payment through Gateway 2");
+                        $payload = [
+                            'valor' => $totalAmount,
+                            'nome'  => $request->name,
+                            'email' => $request->email,
+                            'numeroCartao' => $request->cardNumber,
+                            'cvv' => $request->cvv,
+                        ];
+
+                        $response = $client->withHeaders([
+                            'Gateway-Auth-Token' => config('gateways.gateway_2.token'),
+                            'Gateway-Auth-Secret' => config('gateways.gateway_2.secret')
+                        ])->post(config('gateways.gateway_2.url'), $payload);
+                    }
+
+                    //SUCCESSFULLY CONNECTED TO GATEWAY, CHECK RESPONSE
+                    if ($response && $response->successful()) {
+                        $selectedGateway = $gateway;
+                        $externalId = $response->json('id');
+                        break; 
+                    }
+
+                    //FAIL SAFE :D
+                    $status = $response ? $response->status() : 'Unknown';
+                    throw new Exception("[GATEWAY] '{$gateway->name}' failed with status: {$status}");
+
+                } catch (ConnectionException $e){
+                    Log::warning("TIMEOUT: [GATEWAY] '{$gateway->name}' timed out.");
+                    continue;
+                } catch (Exception $e){
+                    Log::warning("Gateway Failed", [
+                        'gateway' => $gateway->name,
+                        'priority' => $gateway->priority,
+                        'error' => $e->getMessage()
+                    ]);
+                    continue;
+                }
+            }
+
+            if (!$selectedGateway) {
+                Log::emergency('SYSTEM FAILURE: All active gateways failed');
+                return response()->json(['message' => 'Payment failed. All gateways are unavailable'], 502);
+            }
+
+            //CREATE TRANSACTION RECORD AND LINK TO PRODUCTS
+            $transaction = DB::transaction(
+                function() use ($product, $quantity, $totalAmount, $selectedGateway, $externalId, $ccLastNumbers, $request) {
+                    $inner_transaction = Transaction::create([
+                        'client_id'         => auth('sanctum')->check() ? auth('sanctum')->id() : null,
+                        'client_email'      => $request->email,
+                        'gateway_id'        => $selectedGateway->id,
+                        'external_id'       => $externalId,
+                        'status'            => '03 - completed',
+                        'amount'            => $totalAmount,
+                        'card_last_numbers' => $ccLastNumbers,
+                        'product_id'        => $product->id,
+                        'quantity'          => $quantity,
+                    ]);
+
+                    $inner_transaction->products()->attach($product->id, ['quantity' => $quantity]);
+                    return $inner_transaction;
+                }
+            );
+
+            Log::info('Purchase completed!', [
+                'transaction_id' => $transaction->id,
+                'gateway' => $selectedGateway->name,
+                'amount' => $totalAmount
+            ]);
+            return response()->json([
+                'message'        => 'Yay, purchase successful!',
+                'transaction_id' => $transaction->id,
+                'gateway'        => $selectedGateway->name
+            ], 201);
+        }) ?? response()->json([
+                'message' => 'A payment for this order is already being processed. Please wait.'
+            ], 409);
     }
 }

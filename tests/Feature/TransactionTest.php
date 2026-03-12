@@ -114,7 +114,7 @@ class TransactionTest extends TestCase
         ]);
     }
 
-    public function test_return_500_if_all_gateways_fail()
+    public function test_return_502_if_all_gateways_fail()
     {
         $product = Product::factory()->create();
         Gateway::factory()->gateway1()->create();
