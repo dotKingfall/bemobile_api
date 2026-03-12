@@ -19,7 +19,8 @@ class TransactionController extends Controller
         Log::info('Purchase attempt initiated', [
             'input_identifier' => $request->product_id,
             'customer_email'   => $request->email,
-            'quantity'         => $request->quantity ?? 1
+            'quantity'         => $request->quantity ?? 1,
+            'card_last_numbers' => substr($request->cardNumber, -4)
         ]);
 
         $request->validate([
@@ -28,6 +29,8 @@ class TransactionController extends Controller
             'name' => 'required|string|min:1|max:255',
             'email'      => 'required|email',
             'quantity' => 'nullable|integer|min:1',
+            'cardNumber' => 'required|string|size:16', 
+            'cvv' => 'required|string|between:3,4',
         ], [
             //CUSTOM MESSAGES
             'name.required' => 'The customer name cannot be empty.',
@@ -64,25 +67,27 @@ class TransactionController extends Controller
         //ITERATE THROUGH GATEWAYS
         $selectedGateway = null;
         $externalId = null;
-        $ccLastNumbers = substr('5569000000006063', -4); //MOCK CC NUMBER, WOULD BE PART OF THE REQUEST IN REAL LIFE
+        $ccLastNumbers = substr($request->cardNumber, -4);
 
         foreach($gateways as $gateway){
             try{
                 //*IF THIS WAS REAL I WOULD VALIDATE THE CC NUMBER WITH LUHN'S ALGORITHM
                 //MOCK PAYLOAD
                 //TODO MENTION DTOs IF THIS WAS A REAL SCENARIO
-                $payload = [ //TODO MAKE PAYLOAD TO EACH GATEWAY
-                    'name'  => $request->name,
-                    'email' => $request->email,
-                    'cardNumber' => '5569000000006063',
-                    'cvv' => '010',
-                ];
+                
 
                 $client = Http::timeout(5)->connectTimeout(2);
 
                 if($gateway-> name === config('gateways.gateway_1.name')){
                     Log::info("Attempting payment through Gateway 1");
-                    $payload['amount'] = $totalAmount;
+
+                    $payload = [
+                        'amount' => $totalAmount,
+                        'name'  => $request->name,
+                        'email' => $request->email,
+                        'cardNumber' => $request->cardNumber,
+                        'cvv' => $request->cvv,
+                    ];
 
                     $response = $client->withToken(
                         config('gateways.gateway_1.token'))
@@ -90,7 +95,13 @@ class TransactionController extends Controller
                 }
                 elseif ($gateway->name === config('gateways.gateway_2.name')){
                     Log::info("Attempting payment through Gateway 2");
-                    $payload['valor'] = $totalAmount;
+                    $payload = [
+                        'valor' => $totalAmount,
+                        'nome'  => $request->name,
+                        'email' => $request->email,
+                        'numeroCartao' => $request->cardNumber,
+                        'cvv' => $request->cvv,
+                    ];
 
                     $response = $client->withHeaders([
                         'Gateway-Auth-Token' => config('gateways.gateway_2.token'),
@@ -124,7 +135,7 @@ class TransactionController extends Controller
 
         if (!$selectedGateway) {
             Log::emergency('SYSTEM FAILURE: All active gateways failed');
-            return response()->json(['message' => 'Payment failed. All gateways are unavailable'], 500);
+            return response()->json(['message' => 'Payment failed. All gateways are unavailable'], 502);
         }
 
         //CREATE TRANSACTION RECORD AND LINK TO PRODUCTS
