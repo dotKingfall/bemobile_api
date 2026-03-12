@@ -12,7 +12,7 @@ Route::post('/buy', [TransactionController::class, 'store']);
 
 //PROTECTED ROUTES
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']); //TODO
+    Route::post('/logout', [AuthController::class, 'logout']);
 
     //CRUD PRODUCTS, REFUND AND USERS
     Route::apiResource('products', ProductController::class)->middleware('role:admin,manager,finance'); //TODO
