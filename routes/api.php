@@ -18,7 +18,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 
     //CRUD PRODUCTS, REFUND AND USERS
-    Route::apiResource('products', ProductController::class)->middleware('role:admin,manager,finance'); //TODO
+    Route::apiResource('products', ProductController::class)->middleware('role:admin,manager,finance');
     Route::apiResource('users', UserController::class)->middleware('role:admin,manager'); //TODO
     Route::post('/transactions/{transaction}/refund', [TransactionController::class, 'refund'])->middleware('role:admin,finance'); //TODO
 
