@@ -70,7 +70,8 @@ class TransactionController extends Controller
             try{
                 //*IF THIS WAS REAL I WOULD VALIDATE THE CC NUMBER WITH LUHN'S ALGORITHM
                 //MOCK PAYLOAD
-                $payload = [
+                //TODO MENTION DTOs IF THIS WAS A REAL SCENARIO
+                $payload = [ //TODO MAKE PAYLOAD TO EACH GATEWAY
                     'name'  => $request->name,
                     'email' => $request->email,
                     'cardNumber' => '5569000000006063',
