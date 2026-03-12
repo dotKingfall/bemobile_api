@@ -2,15 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\Log;
 use Exception;
+
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\DB;
+
 use App\Models\Product;
 use App\Models\Gateway;
 use App\Models\Transaction;
-use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Support\Facades\DB;
+
+use App\Rules\LuhnRule;
 
 class TransactionController extends Controller
 {
@@ -29,13 +33,15 @@ class TransactionController extends Controller
             'name' => 'required|string|min:1|max:255',
             'email'      => 'required|email',
             'quantity' => 'nullable|integer|min:1',
-            'cardNumber' => 'required|string|size:16', 
+            'cardNumber' => ['required', 'string', 'size:16', new LuhnRule], 
             'cvv' => 'required|string|between:3,4',
         ], [
             //CUSTOM MESSAGES
             'name.required' => 'The customer name cannot be empty.',
             'email.required' => 'The customer email cannot be empty.',
             'email.email' => 'The customer email is not valid.',
+            'cardNumber.size' => 'Please insert a valid card number.',
+            'cvv.between' => 'Please insert a valid CVV (3 or 4 digits).',
         ]);
 
 
