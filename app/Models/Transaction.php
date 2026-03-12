@@ -17,7 +17,8 @@ class Transaction extends Model
         'amount',
         'card_last_numbers',
         'product_id',
-        'quantity'
+        'quantity',
+        'idempotency_hash',
     ];
 
     public function client()

@@ -169,4 +169,31 @@ class TransactionTest extends TestCase
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['cvv']);
     }
+
+    public function test_idempotency_prevents_duplicate_transactions()
+    {
+        $product = Product::factory()->create(['amount' => 1000]);
+        Gateway::factory()->gateway1()->create();
+
+        Http::fake([
+            '*' => Http::response(['id' => 'ext_id_1'], 201)
+        ]);
+
+        $payload = $this->validPayload([
+            'product_id' => $product->id,
+            'quantity'   => 1,
+        ]);
+
+        // FRIST REQUEST -> SUCCESSFUL
+        $response1 = $this->postJson('/api/buy', $payload);
+        $response1->assertStatus(201);
+
+        // SECOND REQUEST -> RETURN 409 BECAUSE IDEMPOTENCY
+        $response2 = $this->postJson('/api/buy', $payload);
+        $response2->assertStatus(409);
+        $response2->assertJsonFragment(['message' => 'A payment for this order is already being processed. Please wait.']);
+
+        // MAKE SURE ONLY ONE TRANSACTION WAS CREATED
+        $this->assertDatabaseCount('transactions', 1);
+    }
 }

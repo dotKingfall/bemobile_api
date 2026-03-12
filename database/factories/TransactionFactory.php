@@ -38,6 +38,8 @@ class TransactionFactory extends Factory
             'product_id'   => fn () => Product::inRandomOrder()->first()->id ?? Product::factory(),
             'quantity' => fake()->numberBetween(1, 10),
 
+            'idempotency_hash' => fn () => md5(str()->random(32)),
+
             'amount' => function (array $attributes) {
                 $product = Product::find($attributes['product_id']);
                 return ($product->amount ?? 1000) * $attributes['quantity'];

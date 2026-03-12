@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('card_last_numbers');
             $table->foreignId('product_id')->constrained(); 
             $table->integer('quantity');
+            $table->string('idempotency_hash')->unique()->nullable();
             $table->timestamps();
         });
     }
