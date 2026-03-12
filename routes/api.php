@@ -33,4 +33,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('/{gateway}/change-status', [GatewayController::class, 'toggleStatus']); //TODO
         Route::patch('/{gateway}/priority', [GatewayController::class, 'updatePriority']); //TODO
     });
+
+    //TODO REMOVE AFTER
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
 });

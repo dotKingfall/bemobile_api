@@ -3,16 +3,28 @@
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Support\Facades\Http;
+
 use Tests\TestCase;
+
 use App\Models\Product;
 use App\Models\Gateway;
-use Illuminate\Support\Facades\Http;
-use App\Models\Transaction;
+
+use App\Rules\LuhnRule;
 
 class TransactionTest extends TestCase
 {
     use RefreshDatabase;
+
+    private function validPayload(array $overrides = []): array
+        {
+            return array_merge([
+                'name'       => 'Valid User',
+                'email'      => 'valid@example.com',
+                'cardNumber' => '5569000000006063', // Valid Luhn card
+                'cvv'        => '010',
+            ], $overrides);
+        }
 
     protected function setUp(): void
     {
@@ -30,17 +42,16 @@ class TransactionTest extends TestCase
             '*' => Http::response(['id' => 'ext_123'], 201)
         ]);
 
-        $response = $this->postJson('/api/buy', [
+        $response = $this->postJson('/api/buy', $this->validPayload([
             'product_id' => $product->id,
-            'name'       => 'Unauthenticated User',
-            'email'      => 'test@example.com',
             'quantity'   => 3,
-        ]);
+        ]));
 
         $response->assertStatus(201);
-        $this->assertDatabaseHas('transactions', [
+        $this->assertDatabaseHas('transactions',[
             'amount' => 15000, // 5000 * 3 (amount * quantity)
-            'product_id' => $product->id
+            'product_id' => $product->id,
+            'client_email' => 'valid@example.com'
         ]);
     }
 
@@ -54,11 +65,9 @@ class TransactionTest extends TestCase
             'http://localhost:3002/*' => Http::response(['id' => 'ext_success'], 201),
         ]);
 
-        $response = $this->postJson('/api/buy', [
+        $response = $this->postJson('/api/buy', $this->validPayload([
             'product_id' => $product->id,
-            'name'       => 'Failover User',
-            'email'      => 'fail@example.com',
-        ]);
+        ]));
 
         $response->assertStatus(201);
         $this->assertDatabaseHas('transactions', [
@@ -73,12 +82,10 @@ class TransactionTest extends TestCase
 
         Http::fake(['*' => Http::response(['id' => '1'], 201)]);
 
-        $this->postJson('/api/buy', [
+        $this->postJson('/api/buy', $this->validPayload([
             'product_id' => $product->id,
-            'name'       => 'Pivot Tester',
-            'email'      => 'pivot@example.com',
             'quantity'   => 5
-        ]);
+        ]));
 
         $this->assertDatabaseHas('transaction_products', [
             'product_id' => $product->id,
@@ -96,11 +103,9 @@ class TransactionTest extends TestCase
         Gateway::factory()->gateway1()->create();
         Http::fake(['*' => Http::response(['id' => 'ext_123'], 201)]);
 
-        $response = $this->postJson('/api/buy', [
+        $response = $this->postJson('/api/buy', $this->validPayload([
             'product_id' => 'Câmera Fotográfica',
-            'name'       => 'User Normalized',
-            'email'      => 'usernormalized@example.com',
-        ]);
+        ]));
 
         $response->assertStatus(201);
         $this->assertDatabaseHas('transactions', [
@@ -120,13 +125,48 @@ class TransactionTest extends TestCase
             'http://localhost:3002/*' => Http::response([], 500),
         ]);
 
-        $response = $this->postJson('/api/buy', [
+        $response = $this->postJson('/api/buy', $this->validPayload([
             'product_id' => $product->id,
-            'name'       => 'Unlucky Buyer',
-            'email'      => 'unlucky@example.com',
-        ]);
+        ]));
 
-        $response->assertStatus(500);
+        $response->assertStatus(502);
         $this->assertDatabaseCount('transactions', 0);
+    }
+
+    public function test_luhn_validation_on_card_number()
+    {
+        $product = Product::factory()->create();
+        Gateway::factory()->gateway1()->create();
+
+        //WRONG CARD SIZE
+        $response = $this->postJson('/api/buy', $this->validPayload([
+            'product_id' => $product->id,
+            'cardNumber' => '1234', 
+        ]));
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['cardNumber']);
+
+        //INVALID CARD NUMBER
+        $response = $this->postJson('/api/buy', $this->validPayload([
+            'product_id' => $product->id,
+            'cardNumber' => '5569000000006064', // One digit off
+        ]));
+
+        $response->assertStatus(422);
+        $response->assertJsonFragment(['cardNumber' => ['Please insert a valid card number.']]);
+    }
+
+    public function test_it_rejects_invalid_cvv_formats()
+    {
+        $product = Product::factory()->create();
+        
+        $response = $this->postJson('/api/buy', $this->validPayload([
+            'product_id' => $product->id,
+            'cvv' => '12', // Too short
+        ]));
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['cvv']);
     }
 }
