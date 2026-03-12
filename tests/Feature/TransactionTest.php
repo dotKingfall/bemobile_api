@@ -21,7 +21,7 @@ class TransactionTest extends TestCase
             return array_merge([
                 'name'       => 'Valid User',
                 'email'      => 'valid@example.com',
-                'cardNumber' => '5569000000006063', // Valid Luhn card
+                'cardNumber' => '4242424242424242', // Valid Luhn card
                 'cvv'        => '010',
             ], $overrides);
         }
