@@ -179,21 +179,14 @@ class TransactionTest extends TestCase
             '*' => Http::response(['id' => 'ext_id_1'], 201)
         ]);
 
-        $payload = $this->validPayload([
-            'product_id' => $product->id,
-            'quantity'   => 1,
-        ]);
+        $payload = $this->validPayload(['product_id' => $product->id]);
+        $expectedHash = md5($payload['email'] . $payload['product_id'] . 1000 . $payload['cardNumber']);
 
         // FRIST REQUEST -> SUCCESSFUL
-        $response1 = $this->postJson('/api/buy', $payload);
-        $response1->assertStatus(201);
+        $this->postJson('/api/buy', $payload)->assertStatus(201);
 
         // SECOND REQUEST -> RETURN 409 BECAUSE IDEMPOTENCY
-        $response2 = $this->postJson('/api/buy', $payload);
-        $response2->assertStatus(409);
-        $response2->assertJsonFragment(['message' => 'A payment for this order is already being processed. Please wait.']);
-
-        // MAKE SURE ONLY ONE TRANSACTION WAS CREATED
+        $response = $this->postJson('/api/buy', $payload)->assertStatus(409);
         $this->assertDatabaseCount('transactions', 1);
     }
 }

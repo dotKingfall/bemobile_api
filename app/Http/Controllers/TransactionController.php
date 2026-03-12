@@ -73,23 +73,29 @@ class TransactionController extends Controller
         }
 
         //CACHE LOCK LOGIC
-        $idempotencyKey = 'payment_lock_' . md5(
-    $request->email . 
-            $request->product_id . 
-            $totalAmount . 
-            $request->cardNumber
-        );
+        $idempotencyHash = md5($request->email . $request->product_id . $totalAmount . $request->cardNumber);
+
+        $existing = Transaction::where('idempotency_hash', $idempotencyHash)
+        ->where('created_at', '>=', now()->subMinutes(5)) // HASH FROM THE LAST 5 MINUTES
+        ->first();
+
+        if ($existing) {
+            return response()->json([
+                'message' => 'A payment for this order is already being processed. Please wait.',
+                'transaction_id' => $existing->id
+            ], 409); //PURCHASE ALREADY DONE
+        }
         
 
         //LOCK IF THE SAME TRANSACTION HAPPENED IN THE LAST 10 SECONDS :D
-        return Cache::lock($idempotencyKey, 10)->get(function () use ($request, $product, $quantity, $totalAmount, $gateways, $ccLastNumbers) {
+        return Cache::lock($idempotencyHash, 10)->get(function () use ($idempotencyHash, $request, $product, $quantity, $totalAmount, $gateways, $ccLastNumbers) {
             //ITERATE THROUGH GATEWAYS
             $selectedGateway = null;
             $externalId = null;
 
             foreach($gateways as $gateway){
                 try{
-                    //*IF THIS WAS A REAL USE SCENARIO I'D PROBABLY BE USING DTO HERE TO MATCH THE DIFFERENT GATEWAY ARGUMENTS
+                    //*IF THIS WAS A REAL USE SCENARIO I'D PROBABLY BE USING DTO HERE OR SOMETHING TO MATCH THE DIFFERENT GATEWAY ARGUMENTS
                     
                     $client = Http::timeout(5)->connectTimeout(2);
 
@@ -155,7 +161,7 @@ class TransactionController extends Controller
 
             //CREATE TRANSACTION RECORD AND LINK TO PRODUCTS
             $transaction = DB::transaction(
-                function() use ($product, $quantity, $totalAmount, $selectedGateway, $externalId, $ccLastNumbers, $request) {
+                function() use ($product, $quantity, $totalAmount, $selectedGateway, $externalId, $ccLastNumbers, $request, $idempotencyHash) {
                     $inner_transaction = Transaction::create([
                         'client_id'         => auth('sanctum')->check() ? auth('sanctum')->id() : null,
                         'client_email'      => $request->email,
@@ -166,6 +172,7 @@ class TransactionController extends Controller
                         'card_last_numbers' => $ccLastNumbers,
                         'product_id'        => $product->id,
                         'quantity'          => $quantity,
+                        'idempotency_hash'  => $idempotencyHash,
                     ]);
 
                     $inner_transaction->products()->attach($product->id, ['quantity' => $quantity]);
