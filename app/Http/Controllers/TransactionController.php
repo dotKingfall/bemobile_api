@@ -159,8 +159,11 @@ class TransactionController extends Controller
     private function createTransactionRecord($request, $product, $result, $totalAmount, $hash){
         return DB::transaction(function() use ($request, $product, $result, $totalAmount, $hash){
 
-            //CHECK IF CLIENT EXISTS, OTHERWISE DO NOT ASSIGN CLIENT_ID
-            $client = Client::where('email', $request->email)->first();
+            //CHECK IF CLIENT EXISTS, OTHERWISE CREATE NEW CLIENT
+            $client = Client::firstOrCreate(
+                ['email' => $request->email], 
+                ['name'  => $request->name]   
+            );
 
             $t = Transaction::create([
                 'client_id'         => $client?->id,
