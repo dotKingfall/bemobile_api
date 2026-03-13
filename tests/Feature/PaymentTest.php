@@ -9,6 +9,8 @@ use Tests\TestCase;
 
 use App\Models\Product;
 use App\Models\Gateway;
+use App\Models\Client;
+use App\Models\Transaction;
 
 use App\Rules\LuhnRule;
 
@@ -52,6 +54,35 @@ class PaymentTest extends TestCase
             'amount' => 15000, // 5000 * 3 (amount * quantity)
             'product_id' => $product->id,
         ]);
+    }
+
+    public function test_transaction_is_assigned_to_existing_client_by_email()
+    {
+        $product = Product::factory()->create();
+        $existingClient = Client::factory()->create([
+            'email' => 'gabe@dev.com',
+            'name'  => 'Gabriel Alves'
+        ]);
+        
+        Gateway::factory()->gateway1()->create();
+
+        Http::fake(['*' => Http::response(['id' => 'ext_123'], 201)]);
+
+        $response = $this->postJson('/api/buy', $this->validPayload([
+            'product_id' => $product->id,
+            'email'      => 'gabe@dev.com',
+        ]));
+
+        $response->assertStatus(201);
+        
+        $this->assertDatabaseHas('transactions', [
+            'client_id'    => $existingClient->id,
+            'client_email' => 'gabe@dev.com',
+            'product_id'   => $product->id
+        ]);
+
+
+        $this->assertEquals(1, Client::where('email', 'gabe@dev.com')->count());
     }
 
     public function test_gateway_fallback_mechanism(){
