@@ -13,15 +13,17 @@ class GatewayTest extends TestCase
     public function test_list_all_gateways()
     {
         $user = User::factory()->create(['role' => 'user']);
-        Gateway::factory()->count(3)->create();
+        Gateway::factory()->create(['priority' => 10, 'name' => 'Gateway 3']);
+        Gateway::factory()->create(['priority' => 1, 'name' => 'Gateway 1']);
+        Gateway::factory()->create(['priority' => 5, 'name' => 'Gateway 2']);
 
         $response = $this->actingAs($user)->getJson('/api/gateways');
 
         $response->assertStatus(200);
         $response->assertJsonCount(3);
 
-        // Verify they are ordered by priority
         $this->assertEquals(1, $response->json('0.priority'));
+        $this->assertEquals('Gateway 1', $response->json('0.name'));
     }
 
     public function test_can_update_gateway_priority()
@@ -51,5 +53,27 @@ class GatewayTest extends TestCase
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['priority']);
+    }
+
+    public function test_toggle_gateway_active_status()
+    {
+        $manager = User::factory()->create(['role' => 'manager']);
+        $gateway = Gateway::factory()->create(['is_active' => true]);
+
+        $response = $this->actingAs($manager)->patchJson("/api/gateways/{$gateway->id}/change-status");
+        $response->assertStatus(200);
+
+        $this->assertDatabaseHas('gateways', [
+            'id' => $gateway->id,
+            'is_active' => false
+        ]);
+
+        $response = $this->actingAs($manager)->patchJson("/api/gateways/{$gateway->id}/change-status");
+        $response->assertStatus(200);
+
+        $this->assertDatabaseHas('gateways', [
+            'id' => $gateway->id,
+            'is_active' => true
+        ]);
     }
 }
