@@ -22,7 +22,7 @@ class SecurityTest extends TestCase
     }
 
     public function test_protected_routes_need_auth(){
-        $response = $this->getJson('/api/user'); //NO AUTH/TOKEN AT ALL :D
+        $response = $this->getJson('/api/products'); //NO AUTH/TOKEN AT ALL :D
         $response->assertStatus(401);
     }
 

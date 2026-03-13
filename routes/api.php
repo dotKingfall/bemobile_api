@@ -7,6 +7,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\GatewayController;
 
 use App\Models\Product;
 
@@ -38,10 +39,5 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/', [GatewayController::class, 'index']); //TODO
         Route::patch('/{gateway}/change-status', [GatewayController::class, 'toggleStatus']); //TODO
         Route::patch('/{gateway}/priority', [GatewayController::class, 'updatePriority']); //TODO
-    });
-
-    //TODO REMOVE AFTER
-    Route::get('/user', function (Request $request) {
-        return $request->user();
     });
 });
