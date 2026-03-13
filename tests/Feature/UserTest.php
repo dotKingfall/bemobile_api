@@ -9,6 +9,8 @@ use App\Models\User;
 
 class UserTest extends TestCase
 {
+    use RefreshDatabase;
+    
     //REIMPLEMENTING ROLE TESTS TO MAKE SURE
     public function test_finance_cannot_access_user_crud()
     {

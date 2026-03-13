@@ -3,13 +3,14 @@
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 use App\Models\User;
 use App\Models\Gateway;
 
 class GatewayTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_list_all_gateways()
     {
         $user = User::factory()->create(['role' => 'user']);
