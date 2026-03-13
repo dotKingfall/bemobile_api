@@ -21,6 +21,11 @@ class Transaction extends Model
         'idempotency_hash',
     ];
 
+    //THIS IS SO COOL
+    protected $hidden = [
+        'idempotency_hash',
+    ];
+
     public function client()
     {
         return $this->belongsTo(Client::class);

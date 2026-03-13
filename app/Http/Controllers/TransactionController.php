@@ -28,12 +28,24 @@ class TransactionController extends Controller
         $this->paymentService = $paymentService;
     }
 
+    public function index(){
+        $transactions = Transaction::with(['gateway', 'products'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(25);
+
+        return response()->json($transactions);
+    }
+
+    public function show(Transaction $transaction){
+        return response()->json($transaction->load(['gateway', 'products']));
+    }
+
     public function store(Request $request){
 
         //VALIDATION FOR DATA, GATEWAY, PRODUCT AND IDEMPOTENCY CHECK =============================================
         $this->validateAndLogRequest($request);
         $product = $this->findProduct($request);
-        if ($product instanceof JsonResponse) return $product; //TODO CHECK THAT
+        if ($product instanceof JsonResponse) return $product;
 
         $totalAmount = $product->amount * ($request->quantity ?? 1);
         $gateways = Gateway::where('is_active', true)->orderBy('priority', 'asc')->get();
