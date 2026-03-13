@@ -83,6 +83,20 @@ class PaymentService
 
   public function processRefund($transaction)
   {
-    //TODO IMPORTANT: Implement refund processing logic
+    $gateway = $transaction->gateway;
+    $client = Http::timeout(5)->connectTimeout(2);
+
+    if ($gateway->name === config('gateways.gateway_1.name')) {
+      $url = config('gateways.gateway_1.url') . "/{$transaction->external_id}/charge_back";
+      return $client->withToken(config('gateways.gateway_1.token'))->post($url);
+
+    } elseif($gateway->name === config('gateways.gateway_2.name')){
+      $url = config('gateways.gateway_2.url') . "/reembolso";
+
+      return $client->withHeaders([
+        'Gateway-Auth-Token' => config('gateways.gateway_2.token'),
+        'Gateway-Auth-Secret' => config('gateways.gateway_2.secret')
+      ])->post($url, ['id' => $transaction->external_id]);
+    }
   }
 }
