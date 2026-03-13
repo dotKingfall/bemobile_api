@@ -68,6 +68,40 @@ class TransactionController extends Controller
                 ->json(['message' => 'A payment for this order is already being processed. Please wait'], 409);
     }
 
+    public function refund(Transaction $transaction){
+        Log::info('Refund attempt initiated', ['transaction_id' => $transaction->id]);
+
+        //*I MEAN, IN REAL LIFE WE'D PROBABLY HAVE A LOOKUP TABLE, SO I'LL JUST LEAVE IT HERE FOR NOW
+        $statusList = [
+            '01 - pending', '02 - processing', '03 - completed', 
+            '04 - failed', '05 - chargeback', '06 - refunded', '07 - partially refunded'
+        ];
+
+        //CHECK IF TRANSACTION WAS ALREADY REFUNDED
+        if ($transaction->status === $statusList[5]) {
+            return response()->json(['message' => 'This transaction has already been refunded.'], 409); //CONFLICT
+        }
+
+        //IGNORE ALL TRANSACTIONS THAT WERE NOT COMPLETED
+        if ($transaction->status !== $statusList[2]) {
+            return response()->json([
+                'message' => "Transactions with status '{$transaction->status}' cannot be refunded."
+            ], 422);
+        }
+
+        $response = $this->paymentService->processRefund($transaction);
+
+        if ($response && $response->successful()) {
+            $transaction->update(['status' => $statusList[5]]); //UPDATE TO REFUNDED
+            
+            Log::info("Transaction {$transaction->id} refunded successfully");
+            return response()->json(['message' => 'Refund successful']);
+        }
+
+        Log::error("Refund failed for transaction {$transaction->id}");
+        return response()->json(['message' => 'Gateway failed refund'], 502);
+    }
+
     private function validateAndLogRequest(Request $request){
         Log::info('Purchase attempt initiated', [
             'input_identifier' => $request->product_id,

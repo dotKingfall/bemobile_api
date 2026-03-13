@@ -81,7 +81,7 @@ class PaymentService
     return null; //ALL GATEWAYS FAILED
   }
 
-  public function processRefund($transaction, $gateway)
+  public function processRefund($transaction)
   {
     //TODO IMPORTANT: Implement refund processing logic
   }
