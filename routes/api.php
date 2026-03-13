@@ -8,6 +8,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\GatewayController;
+use App\Http\Controllers\ClientController;
 
 use App\Models\Product;
 
@@ -24,15 +25,15 @@ Route::middleware('auth:sanctum')->group(function () {
     //*BUT HEY, THIS IS THE BEST WE GET FOR THE SCOPE OF THIS TEST :D
     Route::apiResource('products', ProductController::class)->middleware('role:admin,manager,finance');
     Route::apiResource('users', UserController::class)->middleware('role:admin,manager');
-    Route::post('/transactions/{transaction}/refund', [TransactionController::class, 'refund'])->middleware('role:admin,finance'); //TODO IMPORTANT
+    Route::post('/transactions/{transaction}/refund', [TransactionController::class, 'refund'])->middleware('role:admin,finance');
 
     //NON-ROLE CLIENT ROUTES
-    Route::get('clients', [ClientController::class, 'index']); //TODO
-    Route::get('clients/{client}/transactions', [ClientController::class, 'show']); //TODO
+    Route::get('clients', [ClientController::class, 'index']);
+    Route::get('clients/{client}', [ClientController::class, 'show']);
 
     //NON-ROLE TRANSACTION ROUTES
-    Route::get('/transactions', [TransactionController::class, 'index']); //TODO IMPORTANT
-    Route::get('/transactions/{transaction}', [TransactionController::class, 'show']); //TODO IMPORTANT
+    Route::get('/transactions', [TransactionController::class, 'index']);
+    Route::get('/transactions/{transaction}', [TransactionController::class, 'show']);
 
     //NON-ROLE GATEWAY ROUTES
     Route::prefix('gateways')->group(function () {
