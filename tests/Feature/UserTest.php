@@ -19,6 +19,24 @@ class UserTest extends TestCase
         $response->assertStatus(403);
     }
 
+    public function test_role_assignment_is_case_insensitive()
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $response = $this->actingAs($admin)->postJson('/api/users', [
+            'name'     => 'Case Test User',
+            'email'    => 'casetest@example.com',
+            'password' => 'password123',
+            'role'     => ' MaNaGeR ' 
+        ]);
+
+        $response->assertStatus(201);
+        $this->assertDatabaseHas('users', [
+            'email' => 'casetest@example.com',
+            'role'  => 'manager' 
+        ]);
+    }
+
     public function test_authorized_roles_can_manage_users()
     {
         $authorizedRoles = ['admin', 'manager'];

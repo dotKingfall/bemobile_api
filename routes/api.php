@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\UserController;
 
 use App\Models\Product;
 
@@ -18,8 +19,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 
     //CRUD PRODUCTS, REFUND AND USERS
+    //*IN A REAL CASE SCENARIO, I'D PROBABLY SANITIZE THE USER INPUT FOR USER, CLIENT AND PRODUCTS NAMES TO AVOID SOME KIND OF INJECTION ATTACKS
+    //*BUT HEY, THIS IS THE BEST WE GET FOR THE SCOPE OF THIS TEST :D
     Route::apiResource('products', ProductController::class)->middleware('role:admin,manager,finance');
-    Route::apiResource('users', UserController::class)->middleware('role:admin,manager'); //TODO
+    Route::apiResource('users', UserController::class)->middleware('role:admin,manager');
     Route::post('/transactions/{transaction}/refund', [TransactionController::class, 'refund'])->middleware('role:admin,finance'); //TODO
 
     //NON-ROLE CLIENT ROUTES
