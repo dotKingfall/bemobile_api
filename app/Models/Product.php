@@ -26,14 +26,18 @@ class Product extends Model
     //SEARCH PRODUCT BY ID OR NAME
     public function scopeFindByIdOrName($query, $input)
     {
+        $trimmedInput = trim($input);
+
         //ID
-        if(is_numeric($input)){
-            return $query->where('id', $input);
+        if(is_numeric($trimmedInput)){
+            //* I DON'T QUITE LIKE THIS SOLUTION, BUT IT'S A HASSLE TO IMPLEMENT A SEPARATE THING FOR ID SEARCH
+            //* BESIDES, SOMETHING IS REALLY WRONG IF THERE ARE ONLY NUMBERS ON A PRODUCT NAME. I'D PROBABLY DO SOMETHING DIFFERENT IN A REAL-WORLD SCENARIO
+            return $query->where('id', (int)$trimmedInput);
         }
 
         //* I WOULD ALSO LOWERCASE AND REMOVE ACCENTS, BUT MYSQL IS CASE INSENSITE, SO...
         //CLEAR UNWANTED CHARACTERS
-        $cleanInput = preg_replace('/[^\p{L}\p{N}\s]/u', '', $input);
-        return $query->where('name', 'LIKE', '%' . trim($cleanInput) . '%');
+        $cleanInput = preg_replace('/[^\p{L}\p{N}\s]/u', '', $trimmedInput);
+        return $query->where('name', 'LIKE', '%' . $cleanInput . '%');
     }
 }
