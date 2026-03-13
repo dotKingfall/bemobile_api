@@ -12,7 +12,6 @@ class LuhnRule implements ValidationRule
      *
      * @param  \Closure(string, ?string=): \Illuminate\Translation\PotentiallyTranslatedString  $fail
      */
-
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         $number = preg_replace('/\D/', '', $value);
@@ -20,7 +19,7 @@ class LuhnRule implements ValidationRule
         $shouldDouble = false;
 
         for ($i = strlen($number) - 1; $i >= 0; $i--) {
-            $digit = (int)$number[$i];
+            $digit = (int) $number[$i];
 
             if ($shouldDouble) {
                 $digit *= 2;
@@ -30,7 +29,7 @@ class LuhnRule implements ValidationRule
             }
 
             $sum += $digit;
-            $shouldDouble = !$shouldDouble;
+            $shouldDouble = ! $shouldDouble;
         }
 
         if ($sum % 10 !== 0) {

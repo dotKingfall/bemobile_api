@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\Gateway;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Gateway>
@@ -16,15 +16,17 @@ class GatewayFactory extends Factory
      * @return array<string, mixed>
      */
     protected $model = Gateway::class;
+
     public function definition(): array
     {
 
-        //HERE LIES WHAT MADE ME LOSE 2H DEBUGGING, RANDOM GATEWAY NAMES WERE GENERATED AS FORCE OF HABIT WHEN USING FACTORIES
-        //SO NOW WE'LL USE VALID GATEWAYS TO MAKE SURE I WON'T EVER NEED TO GO THROUGH THAT AGAIN :v
+        // HERE LIES WHAT MADE ME LOSE 2H DEBUGGING, RANDOM GATEWAY NAMES WERE GENERATED AS FORCE OF HABIT WHEN USING FACTORIES
+        // SO NOW WE'LL USE VALID GATEWAYS TO MAKE SURE I WON'T EVER NEED TO GO THROUGH THAT AGAIN :v
         $validGateways = [
             config('gateways.gateway_1.name'),
             config('gateways.gateway_2.name'),
         ];
+
         return [
             'name' => fake()->randomElement($validGateways),
             'is_active' => true,

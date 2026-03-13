@@ -2,14 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Models\Gateway;
+use App\Models\Transaction;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
-use App\Models\User;
-use App\Models\Transaction;
-use App\Models\Gateway;
-use App\Models\Product;
 
 class RefundTest extends TestCase
 {
@@ -43,7 +41,7 @@ class RefundTest extends TestCase
         $finance = User::factory()->create(['role' => 'finance']);
         $transaction = Transaction::factory()->create([
             'status' => '03 - completed',
-            'external_id' => 'ext_123'
+            'external_id' => 'ext_123',
         ]);
 
         // Mock the Gateway response
@@ -55,7 +53,7 @@ class RefundTest extends TestCase
         $response->assertStatus(200);
         $this->assertDatabaseHas('transactions', [
             'id' => $transaction->id,
-            'status' => '06 - refunded'
+            'status' => '06 - refunded',
         ]);
     }
 

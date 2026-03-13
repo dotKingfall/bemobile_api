@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Client;
 
 class ClientController extends Controller
@@ -16,8 +15,8 @@ class ClientController extends Controller
     {
         return response()->json(
             $client->load([
-                'transactions.gateway', 
-                'transactions.products'
+                'transactions.gateway',
+                'transactions.products',
             ])
         );
     }

@@ -2,55 +2,51 @@
 
 namespace Tests\Feature;
 
+use App\Models\Client;
+use App\Models\Gateway;
+use App\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
-
 use Tests\TestCase;
-
-use App\Models\Product;
-use App\Models\Gateway;
-use App\Models\Client;
-use App\Models\Transaction;
-
-use App\Rules\LuhnRule;
 
 class PaymentTest extends TestCase
 {
     use RefreshDatabase;
 
     private function validPayload(array $overrides = []): array
-        {
-            return array_merge([
-                'name'       => 'Valid User',
-                'email'      => 'valid@example.com',
-                'cardNumber' => '4242424242424242', // Valid Luhn card
-                'cvv'        => '010',
-            ], $overrides);
-        }
+    {
+        return array_merge([
+            'name' => 'Valid User',
+            'email' => 'valid@example.com',
+            'cardNumber' => '4242424242424242', // Valid Luhn card
+            'cvv' => '010',
+        ], $overrides);
+    }
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         config(['gateways.gateway_1.name' => 'Gateway 1']);
         config(['gateways.gateway_2.name' => 'Gateway 2']);
     }
 
-    public function test_calculate_price_on_backend(){
+    public function test_calculate_price_on_backend()
+    {
         $product = Product::factory()->create(['amount' => 5000]); // AGAIN, IN CENTS
         Gateway::factory()->gateway1()->create();
 
         Http::fake([
-            '*' => Http::response(['id' => 'ext_123'], 201)
+            '*' => Http::response(['id' => 'ext_123'], 201),
         ]);
 
         $response = $this->postJson('/api/buy', $this->validPayload([
             'product_id' => $product->id,
-            'quantity'   => 3,
+            'quantity' => 3,
         ]));
 
         $response->assertStatus(201);
-        $this->assertDatabaseHas('transactions',[
+        $this->assertDatabaseHas('transactions', [
             'amount' => 15000, // 5000 * 3 (amount * quantity)
             'product_id' => $product->id,
         ]);
@@ -61,26 +57,25 @@ class PaymentTest extends TestCase
         $product = Product::factory()->create();
         $existingClient = Client::factory()->create([
             'email' => 'cool@user.com',
-            'name'  => 'Cool User Name'
+            'name' => 'Cool User Name',
         ]);
-        
+
         Gateway::factory()->gateway1()->create();
 
         Http::fake(['*' => Http::response(['id' => 'ext_123'], 201)]);
 
         $response = $this->postJson('/api/buy', $this->validPayload([
             'product_id' => $product->id,
-            'email'      => 'cool@user.com',
+            'email' => 'cool@user.com',
         ]));
 
         $response->assertStatus(201);
-        
-        $this->assertDatabaseHas('transactions', [
-            'client_id'    => $existingClient->id,
-            'client_email' => 'cool@user.com',
-            'product_id'   => $product->id
-        ]);
 
+        $this->assertDatabaseHas('transactions', [
+            'client_id' => $existingClient->id,
+            'client_email' => 'cool@user.com',
+            'product_id' => $product->id,
+        ]);
 
         $this->assertEquals(1, Client::where('email', 'cool@user.com')->count());
     }
@@ -90,34 +85,35 @@ class PaymentTest extends TestCase
         $product = Product::factory()->create();
         $originalClient = Client::factory()->create([
             'email' => 'cool@user.com',
-            'name'  => 'Cool User Name'
+            'name' => 'Cool User Name',
         ]);
-        
+
         Gateway::factory()->gateway1()->create();
         Http::fake(['*' => Http::response(['id' => 'ext_success'], 201)]);
 
         // CHECK IT WORKS EVEN IF NAME IS  DIFFERENT
         $response = $this->postJson('/api/buy', $this->validPayload([
             'product_id' => $product->id,
-            'email'      => 'cool@user.com',
-            'name'       => 'Gabe Typo' 
+            'email' => 'cool@user.com',
+            'name' => 'Gabe Typo',
         ]));
 
         $response->assertStatus(201);
-        
+
         $this->assertDatabaseHas('transactions', [
-            'client_id'    => $originalClient->id,
-            'client_email' => 'cool@user.com'
+            'client_id' => $originalClient->id,
+            'client_email' => 'cool@user.com',
         ]);
 
         $this->assertEquals(1, Client::where('email', 'cool@user.com')->count());
         $this->assertDatabaseHas('clients', [
-            'id'   => $originalClient->id,
-            'name' => 'Cool User Name'
+            'id' => $originalClient->id,
+            'name' => 'Cool User Name',
         ]);
     }
 
-    public function test_gateway_fallback_mechanism(){
+    public function test_gateway_fallback_mechanism()
+    {
         $product = Product::factory()->create();
         $g1 = Gateway::factory()->gateway1()->create();
         $g2 = Gateway::factory()->gateway2()->create();
@@ -134,11 +130,12 @@ class PaymentTest extends TestCase
         $response->assertStatus(201);
         $this->assertDatabaseHas('transactions', [
             'gateway_id' => $g2->id,
-            'external_id' => 'ext_success'
+            'external_id' => 'ext_success',
         ]);
     }
 
-    public function test_products_table_pivot_record_creation(){
+    public function test_products_table_pivot_record_creation()
+    {
         $product = Product::factory()->create();
         Gateway::factory()->gateway1()->create();
 
@@ -146,20 +143,21 @@ class PaymentTest extends TestCase
 
         $this->postJson('/api/buy', $this->validPayload([
             'product_id' => $product->id,
-            'quantity'   => 5
+            'quantity' => 5,
         ]));
 
         $this->assertDatabaseHas('transaction_products', [
             'product_id' => $product->id,
-            'quantity'   => 5
+            'quantity' => 5,
         ]);
     }
 
-    public function test_find_a_product_by_normalized_name(){
+    public function test_find_a_product_by_normalized_name()
+    {
 
         $product = Product::factory()->create([
             'name' => 'Câmera Fotográfica',
-            'amount' => 1000
+            'amount' => 1000,
         ]);
 
         Gateway::factory()->gateway1()->create();
@@ -172,7 +170,7 @@ class PaymentTest extends TestCase
         $response->assertStatus(201);
         $this->assertDatabaseHas('transactions', [
             'product_id' => $product->id,
-            'amount' => 1000
+            'amount' => 1000,
         ]);
     }
 
@@ -200,16 +198,16 @@ class PaymentTest extends TestCase
         $product = Product::factory()->create();
         Gateway::factory()->gateway1()->create();
 
-        //WRONG CARD SIZE
+        // WRONG CARD SIZE
         $response = $this->postJson('/api/buy', $this->validPayload([
             'product_id' => $product->id,
-            'cardNumber' => '1234', 
+            'cardNumber' => '1234',
         ]));
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['cardNumber']);
 
-        //INVALID CARD NUMBER
+        // INVALID CARD NUMBER
         $response = $this->postJson('/api/buy', $this->validPayload([
             'product_id' => $product->id,
             'cardNumber' => '5569000000006064', // One digit off
@@ -222,7 +220,7 @@ class PaymentTest extends TestCase
     public function test_it_rejects_invalid_cvv_formats()
     {
         $product = Product::factory()->create();
-        
+
         $response = $this->postJson('/api/buy', $this->validPayload([
             'product_id' => $product->id,
             'cvv' => '12', // Too short
@@ -238,11 +236,11 @@ class PaymentTest extends TestCase
         Gateway::factory()->gateway1()->create();
 
         Http::fake([
-            '*' => Http::response(['id' => 'ext_id_1'], 201)
+            '*' => Http::response(['id' => 'ext_id_1'], 201),
         ]);
 
         $payload = $this->validPayload(['product_id' => $product->id]);
-        $expectedHash = md5($payload['email'] . $payload['product_id'] . 1000 . $payload['cardNumber']);
+        $expectedHash = md5($payload['email'].$payload['product_id']. 1000 .$payload['cardNumber']);
 
         // FRIST REQUEST -> SUCCESSFUL
         $this->postJson('/api/buy', $payload)->assertStatus(201);

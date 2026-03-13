@@ -2,10 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\Gateway;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
-use App\Models\User;
-use App\Models\Gateway;
 
 class GatewayTest extends TestCase
 {
@@ -33,13 +33,13 @@ class GatewayTest extends TestCase
         $gateway = Gateway::factory()->create(['priority' => 1]);
 
         $response = $this->actingAs($admin)->patchJson("/api/gateways/{$gateway->id}/priority", [
-            'priority' => 5
+            'priority' => 5,
         ]);
 
         $response->assertStatus(200);
         $this->assertDatabaseHas('gateways', [
             'id' => $gateway->id,
-            'priority' => 5
+            'priority' => 5,
         ]);
     }
 
@@ -49,7 +49,7 @@ class GatewayTest extends TestCase
         $gateway = Gateway::factory()->create();
 
         $response = $this->actingAs($finance)->patchJson("/api/gateways/{$gateway->id}/priority", [
-            'priority' => -1
+            'priority' => -1,
         ]);
 
         $response->assertStatus(422);
@@ -66,7 +66,7 @@ class GatewayTest extends TestCase
 
         $this->assertDatabaseHas('gateways', [
             'id' => $gateway->id,
-            'is_active' => false
+            'is_active' => false,
         ]);
 
         $response = $this->actingAs($manager)->patchJson("/api/gateways/{$gateway->id}/change-status");
@@ -74,7 +74,7 @@ class GatewayTest extends TestCase
 
         $this->assertDatabaseHas('gateways', [
             'id' => $gateway->id,
-            'is_active' => true
+            'is_active' => true,
         ]);
     }
 }

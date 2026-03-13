@@ -2,16 +2,15 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Tests\TestCase;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class UserTest extends TestCase
 {
     use RefreshDatabase;
-    
-    //REIMPLEMENTING ROLE TESTS TO MAKE SURE
+
+    // REIMPLEMENTING ROLE TESTS TO MAKE SURE
     public function test_finance_cannot_access_user_crud()
     {
         $financeUser = User::factory()->create(['role' => 'finance']);
@@ -26,16 +25,16 @@ class UserTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
 
         $response = $this->actingAs($admin)->postJson('/api/users', [
-            'name'     => 'Case Test User',
-            'email'    => 'casetest@example.com',
+            'name' => 'Case Test User',
+            'email' => 'casetest@example.com',
             'password' => 'password123',
-            'role'     => ' MaNaGeR ' 
+            'role' => ' MaNaGeR ',
         ]);
 
         $response->assertStatus(201);
         $this->assertDatabaseHas('users', [
             'email' => 'casetest@example.com',
-            'role'  => 'manager' 
+            'role' => 'manager',
         ]);
     }
 
@@ -47,10 +46,10 @@ class UserTest extends TestCase
             $actor = User::factory()->create(['role' => $role]);
 
             $response = $this->actingAs($actor)->postJson('/api/users', [
-                'name'     => "New $role User",
-                'email'    => "test_{$role}@example.com",
+                'name' => "New $role User",
+                'email' => "test_{$role}@example.com",
                 'password' => 'password123',
-                'role'     => 'user'
+                'role' => 'user',
             ]);
 
             $response->assertStatus(201);
@@ -63,10 +62,10 @@ class UserTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
 
         $response = $this->actingAs($admin)->postJson('/api/users', [
-            'name'     => 'Invalid Role User',
-            'email'    => 'invalid_role@example.com',
+            'name' => 'Invalid Role User',
+            'email' => 'invalid_role@example.com',
             'password' => 'password123',
-            'role'     => 'super-god-mode'
+            'role' => 'super-god-mode',
         ]);
 
         $response->assertStatus(422);

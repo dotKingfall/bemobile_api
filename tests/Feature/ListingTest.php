@@ -2,19 +2,18 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\Transaction;
-use App\Models\Product;
 use App\Models\Client;
+use App\Models\Product;
+use App\Models\Transaction;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class ListingTest extends TestCase
 {
     use RefreshDatabase;
-    
-    //TRANSACTION TESTS ==============================================================================
+
+    // TRANSACTION TESTS ==============================================================================
     public function test_can_list_transactions_with_relations()
     {
         $user = User::factory()->create(['role' => 'admin']);
@@ -25,11 +24,10 @@ class ListingTest extends TestCase
         $response->assertStatus(200);
         $response->assertJsonStructure([
             'data' => [
-                '*' => ['id', 'amount', 'status', 'gateway', 'products']
-            ]
+                '*' => ['id', 'amount', 'status', 'gateway', 'products'],
+            ],
         ]);
     }
-
 
     public function test_can_show_transaction_detail()
     {
@@ -45,10 +43,9 @@ class ListingTest extends TestCase
         $this->assertEquals($product->name, $response->json('products.0.name'));
     }
 
-    //END TRANSACTION TESTS ==========================================================================
+    // END TRANSACTION TESTS ==========================================================================
 
-
-    //CLIENTS TESTS ==================================================================================
+    // CLIENTS TESTS ==================================================================================
     public function test_can_list_all_clients()
     {
         $user = User::factory()->create(['role' => 'user']);
@@ -64,7 +61,7 @@ class ListingTest extends TestCase
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $client = Client::factory()->create();
-        
+
         Transaction::factory()->create(['client_id' => $client->id]);
 
         $response = $this->actingAs($admin)->getJson("/api/clients/{$client->id}");
@@ -73,6 +70,6 @@ class ListingTest extends TestCase
         $response->assertJsonPath('id', $client->id);
         $response->assertJsonCount(1, 'transactions');
     }
-    //END CLIENTS TESTS ==============================================================================
-    
+    // END CLIENTS TESTS ==============================================================================
+
 }

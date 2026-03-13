@@ -2,17 +2,16 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Tests\TestCase;
 use App\Models\Product;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class ProductTest extends TestCase
 {
     use RefreshDatabase;
-    
-    //REPEATING ROLES TESTS JUST TO MAKE SURE
+
+    // REPEATING ROLES TESTS JUST TO MAKE SURE
     public function test_authorized_roles_can_manage_products()
     {
         $roles = ['admin', 'manager', 'finance'];
@@ -22,7 +21,7 @@ class ProductTest extends TestCase
 
             $response = $this->actingAs($user)->postJson('/api/products', [
                 'name' => "Product for $role",
-                'amount' => 1000
+                'amount' => 1000,
             ]);
 
             $response->assertStatus(201);
@@ -36,7 +35,7 @@ class ProductTest extends TestCase
         $product = Product::factory()->create(['name' => 'Old Name', 'amount' => 100]);
 
         $response = $this->actingAs($admin)->putJson("/api/products/{$product->id}", [
-            'name' => 'New Name'
+            'name' => 'New Name',
         ]);
 
         $response->assertStatus(200);
@@ -49,7 +48,7 @@ class ProductTest extends TestCase
 
         $response = $this->actingAs($user)->postJson('/api/products', [
             'name' => 'Should fail',
-            'amount' => 1000
+            'amount' => 1000,
         ]);
 
         $response->assertStatus(403);

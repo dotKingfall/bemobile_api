@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Transaction extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'client_id',
         'client_email',
@@ -21,7 +22,7 @@ class Transaction extends Model
         'idempotency_hash',
     ];
 
-    //THIS IS SO COOL
+    // THIS IS SO COOL
     protected $hidden = [
         'idempotency_hash',
     ];
@@ -34,8 +35,8 @@ class Transaction extends Model
     public function products()
     {
         return $this->belongsToMany(Product::class, 'transaction_products')
-        ->withPivot('quantity')
-        ->withTimestamps();
+            ->withPivot('quantity')
+            ->withTimestamps();
     }
 
     public function gateway()
