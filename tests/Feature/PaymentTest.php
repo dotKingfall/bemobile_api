@@ -60,8 +60,8 @@ class PaymentTest extends TestCase
     {
         $product = Product::factory()->create();
         $existingClient = Client::factory()->create([
-            'email' => 'gabe@dev.com',
-            'name'  => 'Gabriel Alves'
+            'email' => 'cool@user.com',
+            'name'  => 'Cool User Name'
         ]);
         
         Gateway::factory()->gateway1()->create();
@@ -70,19 +70,51 @@ class PaymentTest extends TestCase
 
         $response = $this->postJson('/api/buy', $this->validPayload([
             'product_id' => $product->id,
-            'email'      => 'gabe@dev.com',
+            'email'      => 'cool@user.com',
         ]));
 
         $response->assertStatus(201);
         
         $this->assertDatabaseHas('transactions', [
             'client_id'    => $existingClient->id,
-            'client_email' => 'gabe@dev.com',
+            'client_email' => 'cool@user.com',
             'product_id'   => $product->id
         ]);
 
 
-        $this->assertEquals(1, Client::where('email', 'gabe@dev.com')->count());
+        $this->assertEquals(1, Client::where('email', 'cool@user.com')->count());
+    }
+
+    public function test_transaction_uses_existing_client_even_with_different_name()
+    {
+        $product = Product::factory()->create();
+        $originalClient = Client::factory()->create([
+            'email' => 'cool@user.com',
+            'name'  => 'Cool User Name'
+        ]);
+        
+        Gateway::factory()->gateway1()->create();
+        Http::fake(['*' => Http::response(['id' => 'ext_success'], 201)]);
+
+        // CHECK IT WORKS EVEN IF NAME IS  DIFFERENT
+        $response = $this->postJson('/api/buy', $this->validPayload([
+            'product_id' => $product->id,
+            'email'      => 'cool@user.com',
+            'name'       => 'Gabe Typo' 
+        ]));
+
+        $response->assertStatus(201);
+        
+        $this->assertDatabaseHas('transactions', [
+            'client_id'    => $originalClient->id,
+            'client_email' => 'cool@user.com'
+        ]);
+
+        $this->assertEquals(1, Client::where('email', 'cool@user.com')->count());
+        $this->assertDatabaseHas('clients', [
+            'id'   => $originalClient->id,
+            'name' => 'Cool User Name'
+        ]);
     }
 
     public function test_gateway_fallback_mechanism(){
