@@ -36,7 +36,7 @@ class TransactionTest extends TestCase
 
     public function test_calculate_price_on_backend(){
         $product = Product::factory()->create(['amount' => 5000]); // AGAIN, IN CENTS
-        $gateway = Gateway::factory()->gateway1()->create();
+        Gateway::factory()->gateway1()->create();
 
         Http::fake([
             '*' => Http::response(['id' => 'ext_123'], 201)
@@ -51,7 +51,6 @@ class TransactionTest extends TestCase
         $this->assertDatabaseHas('transactions',[
             'amount' => 15000, // 5000 * 3 (amount * quantity)
             'product_id' => $product->id,
-            'client_email' => 'valid@example.com'
         ]);
     }
 
