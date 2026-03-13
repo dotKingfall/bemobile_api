@@ -47,17 +47,25 @@ class UserController extends Controller
     public function update(Request $request, User $user){
         $validated = $request->validate([
             'name'     => 'string|max:255',
-            'email'    => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'email'    => 'sometimes|string|email|max:255|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:8',
-            'role'     => ['required', Rule::in(['admin', 'manager', 'finance', 'user'])],
+            'role'     => ['sometimes', Rule::in(['admin', 'manager', 'finance', 'user'])],
         ]);
 
-        $user->update([
-            'name'     => $validated['name'] ?? $user->name,
-            'email'    => $validated['email'],
-            'password' => isset($validated['password']) ? Hash::make($validated['password']) : $user->password,
-            'role'     => strtolower($validated['role']),
-        ]);
+        //IF PASSWORD IS NULL OR NOT PRESENT, DON'T UPDATE IT
+        if (!empty($validated['password'])) {
+            $validated['password'] = Hash::make($validated['password']);
+        } else {
+            unset($validated['password']); // Don't overwrite with null
+        }
+
+        //LOWERCASE ROLE IF PRESENT
+        if (isset($validated['role'])) {
+            $validated['role'] = strtolower($validated['role']);
+        }
+
+        $user->update($validated);
+
 
         Log::info('User ' . $user->email . ' updated', ['id' => $user->id, 'role' => $user->role]);
         return response()->json($user);
