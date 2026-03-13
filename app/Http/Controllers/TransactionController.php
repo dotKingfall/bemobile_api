@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Exception;
 
+use App\Services\PaymentService;
+
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
@@ -19,6 +21,13 @@ use App\Rules\LuhnRule;
 
 class TransactionController extends Controller
 {
+    //IMPLEMENT PAYMENT SERVICE THROUGH DEPENDENCY INJECTION
+    protected $paymentService;
+    public function __construct(PaymentService $paymentService)
+    {
+        $this->paymentService = $paymentService;
+    }
+
     public function store(Request $request){
 
         Log::info('Purchase attempt initiated', [
@@ -194,4 +203,21 @@ class TransactionController extends Controller
                 'message' => 'A payment for this order is already being processed. Please wait.'
             ], 409);
     }
+
+    private function validateAndLogRequest(Request $request){}
+
+    private function findProduct($identifier){}
+
+    private function attemptPayment($data, $totalAmount){}
+
+    private function createTransactionRecord($data, $product, $qty, $amount, $payment, $hash){}
+
+    //========================================================================================
+    //HELPER METHODS FOR IDEMPOTENCY AND CACHE LOCK
+    //========================================================================================
+
+    private function generateIdempotencyHash($data, $amount){}
+
+    private function findExistingTransaction($hash){}
+
 }
