@@ -24,20 +24,20 @@ Route::middleware('auth:sanctum')->group(function () {
     //*BUT HEY, THIS IS THE BEST WE GET FOR THE SCOPE OF THIS TEST :D
     Route::apiResource('products', ProductController::class)->middleware('role:admin,manager,finance');
     Route::apiResource('users', UserController::class)->middleware('role:admin,manager');
-    Route::post('/transactions/{transaction}/refund', [TransactionController::class, 'refund'])->middleware('role:admin,finance'); //TODO
+    Route::post('/transactions/{transaction}/refund', [TransactionController::class, 'refund'])->middleware('role:admin,finance'); //TODO IMPORTANT
 
     //NON-ROLE CLIENT ROUTES
     Route::get('clients', [ClientController::class, 'index']); //TODO
     Route::get('clients/{client}/transactions', [ClientController::class, 'show']); //TODO
 
     //NON-ROLE TRANSACTION ROUTES
-    Route::get('/transactions', [TransactionController::class, 'index']); //TODO
-    Route::get('/transactions/{transaction}', [TransactionController::class, 'show']); //TODO
+    Route::get('/transactions', [TransactionController::class, 'index']); //TODO IMPORTANT
+    Route::get('/transactions/{transaction}', [TransactionController::class, 'show']); //TODO IMPORTANT
 
     //NON-ROLE GATEWAY ROUTES
     Route::prefix('gateways')->group(function () {
-        Route::get('/', [GatewayController::class, 'index']); //TODO
-        Route::patch('/{gateway}/change-status', [GatewayController::class, 'toggleStatus']); //TODO
-        Route::patch('/{gateway}/priority', [GatewayController::class, 'updatePriority']); //TODO
+        Route::get('/', [GatewayController::class, 'index']);
+        Route::patch('/{gateway}/change-status', [GatewayController::class, 'toggleStatus']);
+        Route::patch('/{gateway}/priority', [GatewayController::class, 'updatePriority']);
     });
 });
