@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->integer('amount'); // *This is the amount in cents to avoid floating point issues :)
+            $table->softDeletes();
             $table->timestamps();
         });
     }
