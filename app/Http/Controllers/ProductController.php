@@ -11,6 +11,7 @@ class ProductController extends Controller
     public function index(){
         //I MEAN, I THINK 50 IS A GOOD NUMBER :D
         return response()->json(Product::paginate(50));
+        Log::info('Products retrieved', ['count' => Product::count()]);
     }
 
     public function store(Request $request){
@@ -29,6 +30,7 @@ class ProductController extends Controller
 
     public function show(Product $product){
         return response()->json($product);
+        Log::info('Product ' . $product->name . ' retrieved', ['id' => $product->id]);
     }
 
     public function update(Request $request, Product $product){
@@ -45,6 +47,8 @@ class ProductController extends Controller
 
     public function destroy(Product $product){
         $product->delete();
+        
+        Log::info('Product ' . $product->name . ' deleted', ['id' => $product->id]);
         return response()->json(['message' => 'Product deleted successfully'], 204);
     }
 }
