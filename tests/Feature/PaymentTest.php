@@ -12,7 +12,7 @@ use App\Models\Gateway;
 
 use App\Rules\LuhnRule;
 
-class TransactionTest extends TestCase
+class PaymentTest extends TestCase
 {
     use RefreshDatabase;
 
