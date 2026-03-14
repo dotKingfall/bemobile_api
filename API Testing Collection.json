@@ -1,0 +1,847 @@
+{
+  "info": {
+    "_postman_id": "93b1d35f-1e1b-4ed5-94a6-bfad47e42d97",
+    "name": "Bemobile API Testing",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "44294877"
+  },
+  "item": [
+    {
+      "name": "Auth and Logout",
+      "item": [
+        {
+          "name": "Auth Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();\r",
+                  "\r",
+                  "//YOU CAN USE THE TOKEN FROM THE API, BUT IF YOU DO THAT\r",
+                  "//THEN GATEWAY 1 WILL ALWAYS FAIL '-'\r",
+                  "if (pm.response.code === 200 && response.token) {\r",
+                  "    pm.collectionVariables.set(\"auth_token\", response.token);\r",
+                  "    console.log(\"Token created for role \" + response.role);\r",
+                  "} else {\r",
+                  "    console.error(\"Login failed. Check your credentials or server status.\");\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"{{email_admin}}\", \r\n  \"password\": \"{{common_password}}\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Log out",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {\r",
+                  "    pm.collectionVariables.unset(\"auth_token\");\r",
+                  "    console.log(\"Session cleared. Auth token removed from environment.\");\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/logout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "logout"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Product CRUD",
+      "item": [
+        {
+          "name": "List all products",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/products",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "products"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create new product",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\": \"Mouse123\", \"amount\": 10000}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/products",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "products"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update a product",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\": \"Something Something updated\", \"amount\": 50000}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/products/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "products",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete product",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/products/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "products",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "User CRUD",
+      "item": [
+        {
+          "name": "List all users",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create new user",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "//\r\n{\r\n    \"name\": \"Finance Specialist n2\",\r\n    \"email\": \"finance1@finance1.com\",\r\n    \"password\": \"123456789\",\r\n    \"role\": \"FINANCE\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users"
+              ]
+            },
+            "description": "Hey, just remember that for this case, Our code is checking for password length, so we can't use our common password. Also, since the db is probably already seeded, we can't use finance email twice. cya\\~ :)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update an user",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"Admin User Reborn\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/users/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete user",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/5",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "5"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Clients",
+      "item": [
+        {
+          "name": "List all clients",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();\r",
+                  "\r",
+                  "//SETTING AS THE FIRST CLIENT FOR TESTING PURPOSES\r",
+                  "if (response.data && response.data.length > 0) {\r",
+                  "    pm.collectionVariables.set(\"last_client_id\", response.data[0].id);\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/clients",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clients"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get client details",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/clients/{{last_client_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clients",
+                "{{last_client_id}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Gateways",
+      "item": [
+        {
+          "name": "List all gateways",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/gateways",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "gateways"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Change gateway status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();\r",
+                  "if (response.length > 0) {\r",
+                  "    const gw1 = response.find(g => g.name.toLowerCase().includes('one') || g.id === 1);\r",
+                  "    if (gw1) pm.collectionVariables.set(\"gateway_id\", gw1.id);\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/gateways/1/change-status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "gateways",
+                "1",
+                "change-status"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Change gateway priority",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"priority\": 2\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/gateways/2/priority",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "gateways",
+                "2",
+                "priority"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payment",
+      "item": [
+        {
+          "name": "List all transactions",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/transactions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "transactions"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create new transaction",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "//HELP WITH TESTING REFUND\r",
+                  "const response = pm.response.json();\r",
+                  "\r",
+                  "if(pm.response){\r",
+                  "    console.log(response.token);\r",
+                  "    pm.collectionVariables.set(\"gw1_token\", response.token);\r",
+                  "}\r",
+                  "\r",
+                  "if (pm.response.code === 201 && response.transaction_id) {\r",
+                  "    pm.collectionVariables.set(\"last_transaction_id\", response.transaction_id);\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "packages": {},
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"product_id\": 2,\r\n  \"name\": \"Badudu Bididi 21\",\r\n  \"email\": \"test@test.com\",\r\n  \"quantity\": 2,\r\n  \"cardNumber\": \"5555555555554444\",\r\n  \"cvv\": \"101\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/buy",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "buy"
+              ]
+            },
+            "description": "Just remember it needs to be a \"potentially valid CC number, or it's impossible to succeed due to Luhn's algorithm"
+          },
+          "response": []
+        },
+        {
+          "name": "Get transaction details",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/transactions/{{last_transaction_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "transactions",
+                "{{last_transaction_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Refund transaction",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/transactions/{{last_transaction_id}}/refund",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "transactions",
+                "{{last_transaction_id}}",
+                "refund"
+              ]
+            },
+            "description": "Since the transaction status are random, you might wanna check if they are of status 03 - completed beforehand. Otherwise, it's not possible to request a refund"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api"
+    },
+    {
+      "key": "common_password",
+      "value": "123!!@"
+    },
+    {
+      "key": "email_admin",
+      "value": "admin@admin.com"
+    },
+    {
+      "key": "email_finance",
+      "value": "finance@finance.com"
+    },
+    {
+      "key": "email_manager",
+      "value": "manager@manager.com"
+    },
+    {
+      "key": "email_user",
+      "value": "user@user.com"
+    },
+    {
+      "key": "last_transaction_id",
+      "value": ""
+    },
+    {
+      "key": "last_client_id",
+      "value": ""
+    },
+    {
+      "key": "auth_token",
+      "value": ""
+    },
+    {
+      "key": "gw1_token",
+      "value": ""
+    }
+  ]
+}
