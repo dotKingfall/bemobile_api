@@ -1,59 +1,137 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Bemobile Payment API
+### Desafio Back-end BeTalent - Implementação Nível 2
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Este projeto é um orquestrador de pagamentos de alta disponibilidade construído com **Laravel 12**. A API gerencia cobranças em múltiplos gateways com lógica de *failover*, RBAC e proteção contra duplicidade de transações.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🎯 Status da Implementação
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Esta solução cobre todos os requisitos dos **Níveis 1 e 2**, além de grande parte do **Nível 3**:
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+* **Nível 1 & 2**:
+    * Valor da compra calculado no back-end via produto e quantidades.
+    * Gateways com autenticação completa (Bearer Token e Headers customizados).
+* **Nível 3 (Avançado)**:
+    * **Múltiplos Produtos**: Suporte a múltiplos produtos por transação via tabelas pivô.
+    * **Gestão de Roles**: Permissões granulares para Admin, Manager, Finance e User.
+    * **TDD (Test-Driven Development)**: Suíte completa de testes de funcionalidade.
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## 🚀 Como Começar
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 1. Requisitos do Sistema
+* **PHP 8.3+**
+* **Composer**
+* **MySQL 8.0+**
+* **Docker** (Necessário para rodar os mocks dos gateways)
 
-## Laravel Sponsors
+### 2. Instalação
+```bash
+# Clone o repositório
+git clone <seu-url-do-repositorio>
+cd <nome-da-pasta>
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+# Instale as dependências
+composer install
+```
 
-### Premium Partners
+### 3. Configurar Ambiente
+```bash
+cp .env.example .env
+cp .env.testing.example .env.testing
+```
+### 4. Seeding e Gateway
+```bash
+php artisan migrate --seed
+```
+```bash
+docker run -p 3001:3001 -p 3002:3002 matheusprotzen/gateways-mock
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### 5. 👤 Usuários da Seed
+| Email | Role | Nível de Acesso |
+| :--- | :--- | :--- |
+| **admin@admin.com** | `ADMIN` | Acesso total ao sistema. |
+| **manager@manager.com** | `MANAGER` | Gerenciar produtos e usuários. |
+| **finance@finance.com** | `FINANCE` | Gerenciar produtos e realizar reembolsos. |
+| **user@user.com** | `USER` | Acesso a rotas públicas e gerais. |
 
-## Contributing
+### 6. Tabela de Rotas da API
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+| Método | URI | Role | Descrição |
+| :--- | :--- | :--- | :--- |
+| **POST** | `/api/login` | **Público** | Autenticação e geração de token Sanctum. |
+| **POST** | `/api/buy` | **Público** | Ponto de entrada para compras multi-gateway. |
+| **POST** | `/api/logout` | **Autenticado** | Revoga o token de acesso atual. |
+| **GET** | `/api/products` | `admin, manager, finance` | Listagem de todos os produtos. |
+| **POST** | `/api/products` | `admin, manager, finance` | Cadastro de um novo produto. |
+| **GET** | `/api/products/{id}` | `admin, manager, finance` | Visualização detalhada de um produto. |
+| **PUT/PATCH**| `/api/products/{id}` | `admin, manager, finance` | Atualização de dados do produto. |
+| **DELETE** | `/api/products/{id}` | `admin, manager, finance` | Remoção (Soft Delete) de um produto. |
+| **GET** | `/api/users` | `admin, manager` | Listagem de todos os usuários. |
+| **POST** | `/api/users` | `admin, manager` | Criação de novos usuários do sistema. |
+| **GET** | `/api/users/{id}` | `admin, manager` | Visualização detalhada de um usuário. |
+| **PUT/PATCH**| `/api/users/{id}` | `admin, manager` | Atualização de perfil ou role de usuário. |
+| **DELETE** | `/api/users/{id}` | `admin, manager` | Remoção de um usuário do sistema. |
+| **POST** | `/api/transactions/{id}/refund` | `admin, finance` | Processa reembolso no gateway original. |
+| **GET** | `/api/clients` | **Autenticado** | Listagem de clientes que realizaram compras. |
+| **GET** | `/api/clients/{id}` | **Autenticado** | Detalhes do cliente e histórico de transações. |
+| **GET** | `/api/transactions` | **Autenticado** | Listagem paginada de todas as vendas. |
+| **GET** | `/api/transactions/{id}` | **Autenticado** | Detalhes de uma transação específica. |
+| **GET** | `/api/gateways` | **Autenticado** | Lista status e prioridade dos gateways. |
+| **PATCH** | `/api/gateways/{id}/change-status` | **Autenticado** | Ativa ou desativa um gateway específico. |
+| **PATCH** | `/api/gateways/{id}/priority` | **Autenticado** | Altera a prioridade de execução dos gateways. |
 
-## Code of Conduct
+## 🧪 Testes Realizados
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 📡 Gateways
+* **list all gateways**: Garante a listagem correta dos gateways configurados.
+* **can update gateway priority**: Valida a alteração da ordem de prioridade.
+* **cannot set invalid priority**: Proteção contra valores de prioridade fora do esperado.
+* **toggle gateway active status**: Testa a ativação e desativação dinâmica de gateways.
 
-## Security Vulnerabilities
+### 📋 Listings
+* **can list transactions with relations**: Valida a listagem de transações.
+* **can show transaction detail**: Detalhaes individuais de uma venda.
+* **can list all clients**: Listagem de todos os clientes registrados.
+* **can show client with purchase history**: Valida a visualização do cliente junto ao seu histórico de compras.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 💳 Payment
+* **calculate price on backend**: Garante que o cálculo de `quantidade * valor` ocorra no servidor.
+* **transaction is assigned to existing client by email**: Valida a vinculação correta ao encontrar um e-mail já cadastrado.
+* **transaction uses existing client even with different name**: Ignorar nome e pegar nome atrelado ao email.
+* **gateway fallback mechanism**: Valida a tentativa no segundo gateway após falha no primeiro.
+* **products table pivot record creation**: Valida a persistência na tabela `transaction_products`.
+* **find a product by normalized name**: Busca de produto via ID ou Nome.
+* **return 502 if all gateways fail**: Tratamento de erro quando nenhum serviço está disponível.
+* **luhn validation on card number**: Validação local do algoritmo de Luhn para números de cartão.
+* **it rejects invalid cvv formats**: Validação de formato (3-4 dígitos) para CVV.
+* **idempotency prevents duplicate transactions**: Proteção contra double-charge (cobrança duplicada).
 
-## License
+### 📦 Products
+* **authorized roles can manage products**: Valida acesso de Admin, Manager e Finance.
+* **can update product**: Atualização de dados cadastrais.
+* **unauthorized roles cannot manage products**: Proteção de rotas contra acesso indevido.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### 🔄 Refund
+* **manager cannot refund transaction**: Garante que o papel de Manager não tenha acesso financeiro.
+* **cannot refund already refunded transaction**: Impede reembolsos duplicados.
+* **finance can refund completed transaction**: Permite o reembolso para role finance.
+* **cannot refund incomplete transaction**: Impede o reembolso de vendas incompletas  eu com erro.
+
+### 🛡️ RBAC
+* **login req valid email format**: Validação de entrada no login.
+* **protected routes need auth**: Garante que rotas privadas exijam o token Sanctum.
+* **role check is case insensitive**: Só pra confirmar que roles em lowecase são válidas também.
+* **user with insufficient role gets 403**: Validação do middleware de permissões.
+
+### 👤 User CRUD
+* **finance cannot access user crud**: Restrição do Finance sobre a gestão de usuários.
+* **role assignment is case insensitive**: Flexibilidade na case de atribuição de cargos.
+* **authorized roles can manage users**: Roles autorizadas conseguem usar os recursos da API.
+* **cannot create user with invalid role**: Validação de integridade nas Roles.
+
+## Postman/Insomnia
+- O arquivo API Testing Collection.json pode ser importado ao Postman para ajudar com os testes. As variáveis já estão prontas, só testar e ser feliz :D
