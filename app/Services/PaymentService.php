@@ -31,7 +31,12 @@ class PaymentService
                         'cvv' => $request->cvv,
                     ];
 
-                    $response = $client->withToken(config('gateways.gateway_1.token'))
+                    $loginResponse = Http::post('http://localhost:3001/login', [
+                        'email' => config('gateways.gateway_1.email'),
+                        'token' => config('gateways.gateway_1.token'),
+                    ]);
+
+                    $response = $client->withToken($loginResponse->json('token'))
                         ->post(config('gateways.gateway_1.url'), $payload);
 
                 } elseif ($gateway->name === config('gateways.gateway_2.name')) {

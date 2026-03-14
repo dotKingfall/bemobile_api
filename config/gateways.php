@@ -3,6 +3,7 @@
 return [
     'gateway_1' => [
         'name' => env('GATEWAY_1_NAME', 'Gateway 1'),
+        'email' => env('GATEWAY_1_EMAIL', 'dev@betalent.tech'),
         'url' => env('GATEWAY_1_URL'),
         'token' => env('GATEWAY_1_TOKEN'),
     ],
